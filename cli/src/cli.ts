@@ -5,6 +5,12 @@ import { stdin as input, stdout as output } from "node:process";
 import { ReadStream } from "node:tty";
 import { Command } from "commander";
 import { buildContext } from "./context/buildContext.js";
+import {
+  checkDocCoverage,
+  formatDocCoverageAlerts,
+} from "./context/docCoverage.js";
+import { loadMapping } from "./context/docMapper.js";
+import { runInit, printInitResult } from "./init/scaffold.js";
 import { runIsolatedReview } from "./review/spawnReview.js";
 import { saveReport } from "./report/saveReport.js";
 import { listProviders } from "./review/reviewer.js";
@@ -108,6 +114,17 @@ async function runReview(provider: string): Promise<void> {
     process.exit(0);
   }
 
+  const mapping = await loadMapping(rootDir);
+  const docIssues = await checkDocCoverage(
+    rootDir,
+    context.changedFiles,
+    mapping
+  );
+  const docAlerts = formatDocCoverageAlerts(docIssues);
+  if (docAlerts) {
+    console.log(docAlerts);
+  }
+
   console.log(
     `Staged: ${context.changedFiles.length} file(s). Starting isolated ${provider} review...`
   );
@@ -127,6 +144,20 @@ program
   .name("ai-review")
   .description("Local AI pre-commit review pipeline")
   .version("0.1.0");
+
+program
+  .command("init")
+  .description("Scaffold review config, agent docs, and pre-commit hook")
+  .option("--force", "overwrite existing scaffold files")
+  .action(async (options: { force?: boolean }) => {
+    try {
+      const result = await runInit(getRootDir(), Boolean(options.force));
+      printInitResult(result);
+    } catch (error) {
+      console.error(error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
 
 program
   .command("run")

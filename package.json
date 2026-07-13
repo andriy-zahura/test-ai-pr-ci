@@ -9,6 +9,7 @@
     "watch": "tsc --watch",
     "start": "node scripts/dev-server.mjs",
     "ai-review": "node dist-cli/cli.js run --provider mock",
+    "ai-review:init": "node dist-cli/cli.js init",
     "prepare": "husky"
   },
   "devDependencies": {
