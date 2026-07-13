@@ -17,7 +17,7 @@ Output valid JSON matching this schema:
     "security": 0
   },
   "issues": [
-    { "severity": "major", "file": "path", "message": "description" }
+    { "severity": "high", "file": "path", "message": "description" }
   ],
   "improvements": ["suggestion"],
   "previousReviewResolved": {
@@ -28,7 +28,9 @@ Output valid JSON matching this schema:
 }
 ```
 
-Scores are 0–10. Severity: critical | major | minor | suggestion.
+Scores are 0–10. Severity: low | medium | high | critical.
+
+Severity guides priority. The developer always chooses whether to commit.
 
 If no previous review exists, omit `previousReviewResolved` or use empty arrays.
 

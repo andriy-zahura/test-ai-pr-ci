@@ -1,3 +1,0 @@
-#!/bin/sh
-npm run build:cli
-AI_REVIEW_PRE_PUSH=1 npm run ai-review

@@ -49,7 +49,7 @@ export function formatReport(result: ReviewResult, contextSummary: string): stri
       ? result.improvements.map((item) => `- ${item}`).join("\n")
       : "_None._";
 
-  return `# AI Pre-Push Review
+  return `# AI Pre-Commit Review
 
 **Overall score:** ${result.overallScore}/10
 

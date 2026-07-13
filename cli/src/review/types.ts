@@ -8,7 +8,7 @@ export interface CategoryScores {
   security: number;
 }
 
-export type IssueSeverity = "critical" | "major" | "minor" | "suggestion";
+export type IssueSeverity = "low" | "medium" | "high" | "critical";
 
 export interface ReviewIssue {
   severity: IssueSeverity;

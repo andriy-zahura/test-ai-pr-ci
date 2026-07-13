@@ -8,28 +8,21 @@ import { buildContext } from "./context/buildContext.js";
 import { runIsolatedReview } from "./review/spawnReview.js";
 import { saveReport } from "./report/saveReport.js";
 import { listProviders } from "./review/reviewer.js";
-import { parsePrePushStdin, readStdinAll } from "./utils/prePush.js";
+import type { ReviewResult } from "./review/types.js";
 
 function getRootDir(): string {
   return process.cwd();
 }
 
-function printSummary(
-  result: Awaited<ReturnType<typeof runIsolatedReview>>,
-  reportPath: string
-): void {
-  console.log("\n--- AI Pre-Push Review ---\n");
+function printSummary(result: ReviewResult, reportPath: string): void {
+  console.log("\n--- AI Pre-Commit Review ---\n");
   console.log(`Overall score: ${result.overallScore}/10`);
   console.log(`Issues: ${result.issues.length}`);
   console.log(`Report: ${reportPath}\n`);
 
-  for (const issue of result.issues.slice(0, 3)) {
+  for (const issue of result.issues) {
     const location = issue.file ? ` (${issue.file})` : "";
     console.log(`  [${issue.severity}]${location} ${issue.message}`);
-  }
-
-  if (result.issues.length > 3) {
-    console.log(`  ... +${result.issues.length - 3} more`);
   }
 
   console.log("");
@@ -37,7 +30,8 @@ function printSummary(
 
 function openFile(filePath: string): void {
   const platform = process.platform;
-  const command = platform === "darwin" ? "open" : platform === "win32" ? "start" : "xdg-open";
+  const command =
+    platform === "darwin" ? "open" : platform === "win32" ? "start" : "xdg-open";
   const args = platform === "win32" ? ["", filePath] : [filePath];
 
   spawn(command, args, { detached: true, stdio: "ignore" }).unref();
@@ -64,13 +58,15 @@ function createPromptInterface() {
   });
 }
 
-async function promptAction(reportPath: string): Promise<"push" | "cancel"> {
+async function promptAction(reportPath: string): Promise<"commit" | "cancel"> {
   const rl = createPromptInterface();
 
   try {
     while (true) {
       const answer = (
-        await rl.question("[P] Push anyway  [R] Open review  [C] Cancel push\n> ")
+        await rl.question(
+          "[P] Commit anyway  [R] Open review  [C] Cancel commit\n> "
+        )
       )
         .trim()
         .toLowerCase();
@@ -80,8 +76,8 @@ async function promptAction(reportPath: string): Promise<"push" | "cancel"> {
         continue;
       }
 
-      if (answer === "p" || answer === "push") {
-        return "push";
+      if (answer === "p" || answer === "commit") {
+        return "commit";
       }
 
       if (answer === "c" || answer === "cancel") {
@@ -101,38 +97,19 @@ async function promptAction(reportPath: string): Promise<"push" | "cancel"> {
   }
 }
 
-async function resolveReviewRange(): Promise<void> {
-  if (process.env.AI_REVIEW_RANGE?.trim()) {
-    return;
-  }
-
-  if (process.env.AI_REVIEW_PRE_PUSH !== "1") {
-    return;
-  }
-
-  const stdin = await readStdinAll();
-  const range = parsePrePushStdin(stdin);
-
-  if (range) {
-    process.env.AI_REVIEW_RANGE = range;
-  }
-}
-
 async function runReview(provider: string): Promise<void> {
   const rootDir = getRootDir();
 
-  await resolveReviewRange();
-
-  console.log("Building review context...");
+  console.log("Building review context (staged changes)...");
   const context = await buildContext(rootDir);
 
   if (context.changedFiles.length === 0) {
-    console.log("No changed files detected. Skipping review.");
+    console.log("No staged changes to review.");
     process.exit(0);
   }
 
   console.log(
-    `Changed: ${context.changedFiles.length} file(s). Starting isolated ${provider} review...`
+    `Staged: ${context.changedFiles.length} file(s). Starting isolated ${provider} review...`
   );
 
   const result = await runIsolatedReview(provider, context);
@@ -141,19 +118,19 @@ async function runReview(provider: string): Promise<void> {
   printSummary(result, reportPath);
 
   const action = await promptAction(reportPath);
-  process.exit(action === "push" ? 0 : 1);
+  process.exit(action === "commit" ? 0 : 1);
 }
 
 const program = new Command();
 
 program
   .name("ai-review")
-  .description("Local AI pre-push review pipeline")
+  .description("Local AI pre-commit review pipeline")
   .version("0.1.0");
 
 program
   .command("run")
-  .description("Run review against current git changes")
+  .description("Review staged changes before commit")
   .option("--provider <name>", "review provider", "mock")
   .action(async (options: { provider: string }) => {
     try {

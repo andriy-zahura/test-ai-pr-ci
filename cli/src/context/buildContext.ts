@@ -54,132 +54,21 @@ async function getLatestReview(reviewsDir: string): Promise<string | null> {
   return readFile(join(reviewsDir, reports[0]), "utf8");
 }
 
-async function diffForRange(
-  git: ReturnType<typeof simpleGit>,
-  range: string
-): Promise<{ changedFiles: string[]; diff: string }> {
-  const diff = await git.diff([range]);
-  const summary = await git.diffSummary([range]);
-  const changedFiles = summary.files.map((file: { file: string }) => file.file);
-
-  return { changedFiles, diff };
-}
-
-async function getUnpushedRange(
-  git: ReturnType<typeof simpleGit>
-): Promise<string | null> {
-  try {
-    const log = await git.log(["@{u}..HEAD", "--oneline"]);
-    if (log.total === 0) {
-      return null;
-    }
-
-    const upstream = await git.revparse(["@{u}"]);
-    const head = await git.revparse(["HEAD"]);
-    return `${upstream}..${head}`;
-  } catch {
-    return null;
-  }
-}
-
-async function getGitChanges(rootDir: string): Promise<{
+async function getStagedChanges(rootDir: string): Promise<{
   changedFiles: string[];
   diff: string;
 }> {
   const git = simpleGit(rootDir);
-
-  const pushRange = process.env.AI_REVIEW_RANGE?.trim();
-  if (pushRange) {
-    try {
-      const result = await diffForRange(git, pushRange);
-      if (result.diff.trim().length > 0 || result.changedFiles.length > 0) {
-        return result;
-      }
-    } catch {
-      // fall through to other strategies
-    }
-  }
-
-  const unpushedRange = await getUnpushedRange(git);
-  if (unpushedRange) {
-    try {
-      const result = await diffForRange(git, unpushedRange);
-      if (result.diff.trim().length > 0 || result.changedFiles.length > 0) {
-        return result;
-      }
-    } catch {
-      // fall through
-    }
-  }
-
-  const remotes = (await git.remote(["-v"])) ?? "";
-  const hasOrigin = remotes.includes("origin");
-
-  let diff = "";
-  let changedFiles: string[] = [];
-
-  const strategies = hasOrigin
-    ? ["origin/main..HEAD", "origin/master..HEAD"]
-    : ["main..HEAD", "master..HEAD"];
-
-  for (const spec of strategies) {
-    try {
-      const result = await diffForRange(git, spec);
-      if (result.diff.trim().length > 0 || result.changedFiles.length > 0) {
-        return result;
-      }
-    } catch {
-      continue;
-    }
-  }
-
-  const status = await git.status();
-  changedFiles = [
-    ...new Set([
-      ...status.modified,
-      ...status.created,
-      ...status.deleted,
-      ...status.renamed.map((entry: { to: string }) => entry.to),
-      ...status.staged,
-    ]),
-  ];
-  diff = await git.diff(["HEAD"]);
-
-  if (changedFiles.length === 0) {
-    const staged = await git.diff(["--cached"]);
-    if (staged) {
-      diff = staged;
-      changedFiles = status.staged;
-    }
-  }
-
-  if (changedFiles.length === 0 && diff.trim().length === 0) {
-    const untracked = status.not_added.filter(
-      (file) =>
-        !file.startsWith("node_modules/") &&
-        !file.startsWith("dist/") &&
-        !file.startsWith("dist-cli/")
-    );
-
-    if (untracked.length > 0) {
-      changedFiles = untracked;
-      const chunks: string[] = [];
-
-      for (const file of untracked) {
-        const content = await readFile(join(rootDir, file), "utf8").catch(() => "");
-        chunks.push(`--- new file: ${file} ---\n${content}`);
-      }
-
-      diff = chunks.join("\n\n");
-    }
-  }
+  const diff = await git.diff(["--cached"]);
+  const summary = await git.diffSummary(["--cached"]);
+  const changedFiles = summary.files.map((file: { file: string }) => file.file);
 
   return { changedFiles, diff };
 }
 
 export async function buildContext(rootDir: string): Promise<ReviewContext> {
   const mapping = await loadMapping(rootDir);
-  const { changedFiles, diff } = await getGitChanges(rootDir);
+  const { changedFiles, diff } = await getStagedChanges(rootDir);
   const docDirs = resolveDocDirs(changedFiles, mapping);
 
   const projectRules: Record<string, string> = {};
@@ -208,7 +97,7 @@ export async function buildContext(rootDir: string): Promise<ReviewContext> {
   return {
     generatedAt: new Date().toISOString(),
     changedFiles,
-    diff: diff || "(no diff detected)",
+    diff: diff || "(no staged diff)",
     projectRules,
     featureDocs,
     metadata,

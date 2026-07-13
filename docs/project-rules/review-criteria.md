@@ -31,13 +31,13 @@ AI reviewer scores each category 0–10. Overall score is weighted average.
 
 ## Issue severity
 
-- **Critical** — security hole, data loss, auth bypass
-- **Major** — missing validation, broken flow, spec mismatch
-- **Minor** — style, naming, missing label
-- **Suggestion** — improvement, not a defect
+- **Low** — style, naming, minor improvement — advisory only
+- **Medium** — incomplete docs, missing tests, moderate risk
+- **High** — missing validation, spec mismatch, significant defect
+- **Critical** — security hole, data loss, auth bypass, broken build
 
-## Pass guidance
+## Commit decision
 
-- Overall ≥ 7: acceptable for demo push
-- Overall < 5: likely spec or security gaps
-- Push is never blocked automatically — scores are advisory
+- Severity (low → critical) indicates priority in the report
+- The developer always chooses: commit anyway, open review, or cancel
+- The hook never auto-blocks

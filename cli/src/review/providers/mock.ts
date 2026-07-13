@@ -44,7 +44,7 @@ export const mockProvider: ReviewProvider = {
 
     if (storesPasswords) {
       issues.push({
-        severity: "major",
+        severity: "high",
         file: "src/auth.ts",
         message:
           "Passwords stored in plain text in localStorage — acceptable for demo, not production.",
@@ -61,14 +61,14 @@ export const mockProvider: ReviewProvider = {
 
     if (context.changedFiles.length > 0 && Object.keys(context.featureDocs).length === 0) {
       issues.push({
-        severity: "minor",
+        severity: "medium",
         message: "Changed files have no mapped feature documentation.",
       });
     }
 
     if (issues.length === 0) {
       issues.push({
-        severity: "suggestion",
+        severity: "low",
         message: "No significant issues detected by mock reviewer.",
       });
     }
