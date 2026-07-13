@@ -3,10 +3,9 @@ dist-cli/
 .review-context/
 *.tgz
 
-# Local env (API keys)
+# Local env (API keys) — contributors only, not published
 .env
 .env.local
 
-# Local review reports (not committed)
-docs/reviews/**
-!docs/reviews/.gitkeep
+# Local dogfood reports if you run ai-review manually
+docs/reviews/

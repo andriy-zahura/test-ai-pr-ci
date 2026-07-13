@@ -1,151 +1,96 @@
-# JTI AI Pre-Commit Review
+# jti-ai-review
 
-Local pre-commit review pipeline. Syncs feature docs before commit. Runs an isolated reviewer on `git commit`.
+npm package — local AI pre-commit review for **consumer repos**.
 
-**Not** a code editor plugin. **Not** Cursor's `/code-review`. Dev agent syncs context → hook runs real review.
+This repository is the **CLI source**. It does not run the review pipeline on its own commits.
+
+Consumers install the package and run `npx ai-review init` to scaffold hooks, docs, and skills in their project.
 
 ---
 
-## Quick start (new repo)
+## Package development
 
 ```bash
 npm install
 npm run build:cli
-npm run ai-review:init   # prompts for OPENAI_API_KEY
+npm run pack:local          # test tarball without publishing
 ```
 
-Init scaffolds:
+Pre-commit hook here only runs `build:cli` (compile check).
 
-- `.env.example` + `.env` (API key prompt)
-- `.husky/pre-commit` hook
-- `review-mapping.json`
-- `docs/project-rules/`, `docs/ai-review/`
-- `.cursor/skills/jti-review/` skill
-
-Then install Husky if needed:
+To dogfood the full review flow locally:
 
 ```bash
-npm install -D husky
-npx husky init   # skip if hook already exists
+node dist-cli/cli.js init --skip-prompt
+node dist-cli/cli.js run    # after git add
 ```
 
 ---
 
-## Daily workflow
+## Consumer install (npm)
+
+```bash
+npm install -D jti-ai-review
+npx ai-review init
+npm install
+```
+
+Init scaffolds in the **consumer project**:
+
+- `.husky/pre-commit` → runs `ai-review` on commit
+- `.env` / `.env.example`
+- `review-mapping.json`, `docs/project-rules/`, `docs/ai-review/`
+- `.cursor/skills/jti-review/`
+
+### Workflow (consumer repo)
 
 ```text
-1. Write code
-2. /jti-review          → agent syncs mapping + docs/<feature>/
-3. git add .
-4. git commit           → review runs → [P] commit / [R] report / [C] cancel
-5. git push             → no review hook
+1. /jti-review     → sync mapping + feature docs
+2. git add .
+3. git commit      → review → [P] commit / [R] report / [C] cancel
 ```
-
-### Copy skill globally (optional)
-
-```bash
-cp -r .cursor/skills/jti-review ~/.cursor/skills/
-```
-
-Tell your agent once:
-
-> Read `docs/ai-review/AGENT-INSTRUCTIONS.md`. Use `/jti-review` before commit.
 
 ---
 
-## What gets reviewed
+## Providers
 
-Only **staged** changes, plus:
+| Provider | Env key |
+|----------|---------|
+| cursor | `CURSOR_API_KEY` |
+| openai | `OPENAI_API_KEY` |
+| codex | `OPENAI_API_KEY` |
+| claude | `ANTHROPIC_API_KEY` |
+| gemini | `GOOGLE_API_KEY` |
 
-| Context | Source |
-|---------|--------|
-| Project rules | `docs/project-rules/` (always) |
-| Feature docs | `review-mapping.json` → `docs/<feature>/` |
-| Prior report | Latest `docs/reviews/YYYY-MM-DD/*.md` (local, gitignored) |
+Set `AI_REVIEW_PROVIDER` in `.env`. Falls back to `mock` without a key.
 
-The commit reviewer is a **separate isolated session** — no IDE chat history.
+For reliable reviews, prefer **anthropic** or **openai** direct API keys over cursor Cloud Agents.
 
 ---
 
-## Key files
+## What ships on npm
 
-| File | Purpose |
-|------|---------|
-| `review-mapping.json` | Staged file patterns → doc folders |
-| `docs/<feature>/README.md` | Feature spec the reviewer checks against |
-| `docs/ai-review/` | Agent onboarding + `/jti-review` skill docs |
-| `cli/` | Review pipeline source |
-| `spec.md` | Full design spec |
+Only `dist-cli/`, `README.md`, and `LICENSE` — no consumer scaffold, no review reports.
 
 ---
 
 ## Commands
 
 ```bash
-npm run build:cli       # compile CLI
-npm run ai-review:init  # scaffold config + docs + skill
-npm run ai-review         # run review on staged files (same as hook)
-```
-
-Provider: `cursor` | `openai` | `codex` | `anthropic`/`claude` | `gemini`/`google` | `mock`
-
-```bash
-npm run ai-review:init   # pick provider + enter API key
-# or: cp .env.example .env and fill in CURSOR_API_KEY / OPENAI_API_KEY / etc.
-```
-
-| Provider | Env key | Notes |
-|----------|---------|-------|
-| **cursor** | `CURSOR_API_KEY` | From Cursor Dashboard → Integrations |
-| openai | `OPENAI_API_KEY` | Chat Completions API |
-| codex | `OPENAI_API_KEY` | Same API, codex-tuned default model |
-| claude | `ANTHROPIC_API_KEY` | Anthropic Messages API |
-| gemini | `GOOGLE_API_KEY` | Google AI Studio key |
-
-Set `AI_REVIEW_PROVIDER=cursor` (or openai, codex, anthropic, gemini). Falls back to `mock` without a key.
-
----
-
-## Add to existing project
-
-### Option A — local `.tgz` (no npm registry)
-
-```bash
-# In jti-ai-review repo
+npm run build:cli
 npm run pack:local
-# → jti-ai-review-0.1.0.tgz
-
-# In your other project
-npm install -D /absolute/path/to/jti-ai-review-0.1.0.tgz
-npx ai-review init
-npm install   # installs husky from init + wires prepare
-git add . && git commit
+npm publish
 ```
 
-### Option B — `npm link`
+CLI:
 
 ```bash
-# In jti-ai-review repo
-npm run build:cli && npm link
-
-# In your other project
-npm link jti-ai-review
-npx ai-review init
+ai-review init [--force] [--skip-prompt]
+ai-review run [--provider <name>]
 ```
-
-### Option C — direct path (no install)
-
-```bash
-node /absolute/path/to/test-ai-pr-ci/dist-cli/cli.js init
-# then set package.json scripts to that node path manually
-```
-
-After init, edit `review-mapping.json` and create `docs/<feature>/README.md` per template.
 
 ---
 
-## Bypass
+## Design
 
-```bash
-git commit --no-verify
-```
+See [spec.md](spec.md) for full pipeline design.

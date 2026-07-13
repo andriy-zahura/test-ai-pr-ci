@@ -1,14 +1,32 @@
 {
   "name": "jti-ai-review",
   "version": "0.1.0",
-  "private": true,
-  "type": "module",
   "description": "Local AI pre-commit review pipeline with doc-sync skill",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andriy-zahura/test-ai-pr-ci.git"
+  },
+  "homepage": "https://github.com/andriy-zahura/test-ai-pr-ci#readme",
+  "bugs": {
+    "url": "https://github.com/andriy-zahura/test-ai-pr-ci/issues"
+  },
+  "keywords": [
+    "ai",
+    "code-review",
+    "pre-commit",
+    "husky",
+    "cursor",
+    "llm"
+  ],
+  "type": "module",
   "bin": {
     "ai-review": "dist-cli/cli.js"
   },
   "files": [
-    "dist-cli"
+    "dist-cli",
+    "README.md",
+    "LICENSE"
   ],
   "scripts": {
     "build": "npm run build:cli",
