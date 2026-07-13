@@ -1,13 +1,12 @@
 {
-  "name": "test-ai-pr-ci",
+  "name": "jti-ai-review",
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "description": "Local AI pre-commit review pipeline with doc-sync skill",
   "scripts": {
-    "build": "tsc && npm run build:cli",
+    "build": "npm run build:cli",
     "build:cli": "tsc -p cli/tsconfig.json",
-    "watch": "tsc --watch",
-    "start": "node scripts/dev-server.mjs",
     "ai-review": "node dist-cli/cli.js run --provider mock",
     "ai-review:init": "node dist-cli/cli.js init",
     "prepare": "husky"

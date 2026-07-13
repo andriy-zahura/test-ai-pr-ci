@@ -2,58 +2,5 @@
   "alwaysInclude": [
     "docs/project-rules"
   ],
-  "mappings": [
-    {
-      "pattern": "src/auth.ts",
-      "docs": "docs/auth"
-    },
-    {
-      "pattern": "src/login.ts",
-      "docs": "docs/auth"
-    },
-    {
-      "pattern": "src/success.ts",
-      "docs": "docs/auth"
-    },
-    {
-      "pattern": "index.html",
-      "docs": "docs/auth"
-    },
-    {
-      "pattern": "success.html",
-      "docs": "docs/auth"
-    },
-    {
-      "pattern": "src/theme.ts",
-      "docs": "docs/theme"
-    },
-    {
-      "pattern": "src/styles.css",
-      "docs": "docs/theme"
-    },
-    {
-      "pattern": "index.html",
-      "docs": "docs/theme"
-    },
-    {
-      "pattern": "success.html",
-      "docs": "docs/theme"
-    },
-    {
-      "pattern": "src/login.ts",
-      "docs": "docs/theme"
-    },
-    {
-      "pattern": "src/success.ts",
-      "docs": "docs/theme"
-    },
-    {
-      "pattern": "src/clock.ts",
-      "docs": "docs/clock"
-    },
-    {
-      "pattern": "success.html",
-      "docs": "docs/clock"
-    }
-  ]
+  "mappings": []
 }
