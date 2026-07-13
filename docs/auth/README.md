@@ -25,7 +25,7 @@ Client-only authentication demo. No backend. Credentials stored in `localStorage
 2. Enters email + password.
 3. System validates:
    - Email matches `/^[^\s@]+@[^\s@]+\.[^\s@]+$/`
-   - Password length ≥ 6
+   - Password length ≥ 8
 4. Email normalized: trim + lowercase.
 5. Rejects duplicate email.
 6. Stores `{ [email]: password }` in `auth_users`.
@@ -64,7 +64,7 @@ Client-only authentication demo. No backend. Credentials stored in `localStorage
 | Condition            | Message                              |
 |----------------------|--------------------------------------|
 | Invalid email        | Enter a valid email address.         |
-| Short password       | Password must be at least 6 characters. |
+| Short password       | Password must be at least 8 characters. |
 | Duplicate sign-up    | An account with this email already exists. |
 | Unknown email        | No account found for this email.     |
 | Wrong password       | Incorrect password.                  |

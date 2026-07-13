@@ -40,7 +40,7 @@ export function isValidEmail(email: string): boolean {
 }
 
 export function isValidPassword(password: string): boolean {
-  return password.length >= 6;
+  return password.length >= 8;
 }
 
 export function signUp(email: string, password: string): string | null {
@@ -51,7 +51,7 @@ export function signUp(email: string, password: string): string | null {
   }
 
   if (!isValidPassword(password)) {
-    return "Password must be at least 6 characters.";
+    return "Password must be at least 8 characters.";
   }
 
   const users = readUsers();
