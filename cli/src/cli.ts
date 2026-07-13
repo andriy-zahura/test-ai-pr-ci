@@ -1,7 +1,8 @@
 import { spawn } from "node:child_process";
-import { createReadStream } from "node:fs";
+import { openSync } from "node:fs";
 import { createInterface } from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
+import { ReadStream } from "node:tty";
 import { Command } from "commander";
 import { buildContext } from "./context/buildContext.js";
 import { runIsolatedReview } from "./review/spawnReview.js";
@@ -44,7 +45,7 @@ function openFile(filePath: string): void {
 
 function createPromptInterface() {
   if (input.isTTY) {
-    return createInterface({ input, output });
+    return createInterface({ input, output, terminal: true });
   }
 
   if (process.platform === "win32") {
@@ -53,9 +54,13 @@ function createPromptInterface() {
     );
   }
 
+  const ttyFd = openSync("/dev/tty", "r");
+  const ttyInput = new ReadStream(ttyFd);
+
   return createInterface({
-    input: createReadStream("/dev/tty"),
+    input: ttyInput,
     output,
+    terminal: true,
   });
 }
 
