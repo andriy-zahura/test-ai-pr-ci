@@ -13,7 +13,7 @@ Covers theme tokens, switcher UI, persistence, and page bootstrap. Does not cove
 | `src/theme.ts` | Theme API, localStorage, switcher mount |
 | `src/styles.css` | Light/dark CSS variable sets |
 | `src/login.ts` | Calls `initTheme()` + `mountThemeSwitcher()` |
-| `src/success.ts` | Calls `initTheme()` + `mountThemeSwitcher()` |
+| `src/success.ts` | Calls `initTheme()` + `mountThemeSwitcher()`; shows current theme label |
 | `index.html` | Inline boot script to apply theme before paint |
 | `success.html` | Inline boot script to apply theme before paint |
 
@@ -41,6 +41,12 @@ Covers theme tokens, switcher UI, persistence, and page bootstrap. Does not cove
 2. Navigates to success page (or back).
 3. Same theme applied from localStorage.
 
+### Success page theme label
+
+1. After auth session check, success page inserts `#theme-label` below user email.
+2. Label text: `Current theme: ☀ Light` or `Current theme: ☾ Dark`.
+3. Label updates when user clicks theme switcher.
+
 ## Validation rules
 
 | Input | Rule | Behavior |
@@ -59,6 +65,7 @@ Covers theme tokens, switcher UI, persistence, and page bootstrap. Does not cove
 | Function | Behavior |
 |----------|----------|
 | `getTheme()` | Stored theme or system fallback |
+| `getThemeLabel(theme?)` | Human-readable label for a theme (`☀ Light` / `☾ Dark`); defaults to current theme |
 | `setTheme(theme)` | Persist + apply |
 | `toggleTheme()` | Flip theme, return new value |
 | `initTheme()` | Apply current theme to DOM |
@@ -69,8 +76,9 @@ Covers theme tokens, switcher UI, persistence, and page bootstrap. Does not cove
 | Element | Requirement |
 |---------|-------------|
 | Switcher | Fixed top-right, class `theme-switcher` |
-| Button label | `☀ Light` in dark mode, `☾ Dark` in light mode |
+| Button label | `☀ Light` in dark mode, `☾ Dark` in light mode (via `getThemeLabel()` for target theme) |
 | `aria-label` | `"Switch to dark theme"` or `"Switch to light theme"` |
+| Success theme label | `#theme-label`, class `hint`, text `Current theme: <label>` |
 
 ## Themes
 
@@ -94,3 +102,5 @@ Both themes use CSS custom properties on `[data-theme="light"]` and `[data-theme
 - Switcher accessible (`aria-label`, button type)
 - CSS uses variables; no hardcoded colors outside token blocks
 - Theme persists across login ↔ success navigation
+- Success page shows current theme label; updates on toggle
+- `getThemeLabel()` used for switcher and success label text

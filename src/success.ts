@@ -1,8 +1,20 @@
 import { getSession, logOut } from "./auth.js";
-import { initTheme, mountThemeSwitcher } from "./theme.js";
+import { getThemeLabel, initTheme, mountThemeSwitcher } from "./theme.js";
 
 initTheme();
-mountThemeSwitcher();
+const themeSwitcher = mountThemeSwitcher();
+
+const themeLabelEl = document.createElement("p");
+themeLabelEl.id = "theme-label";
+themeLabelEl.className = "hint";
+
+const syncThemeLabel = (): void => {
+  themeLabelEl.textContent = `Current theme: ${getThemeLabel()}`;
+};
+
+document.getElementById("user-email")?.after(themeLabelEl);
+syncThemeLabel();
+themeSwitcher.addEventListener("click", syncThemeLabel);
 
 const emailEl = document.getElementById("user-email") as HTMLParagraphElement;
 const logoutButton = document.getElementById("logout") as HTMLButtonElement;

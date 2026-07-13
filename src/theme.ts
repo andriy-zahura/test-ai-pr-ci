@@ -2,10 +2,19 @@ export type Theme = "light" | "dark";
 
 export const THEME_STORAGE_KEY = "app_theme";
 
+const themeLabels: Record<Theme, string> = {
+  light: "☀ Light",
+  dark: "☾ Dark",
+};
+
 const toggleLabels: Record<Theme, string> = {
   light: "Switch to dark theme",
   dark: "Switch to light theme",
 };
+
+export function getThemeLabel(theme: Theme = getTheme()): string {
+  return themeLabels[theme];
+}
 
 export function getStoredTheme(): Theme | null {
   const stored = localStorage.getItem(THEME_STORAGE_KEY);
@@ -47,7 +56,7 @@ export function mountThemeSwitcher(container: HTMLElement = document.body): HTML
 
   const syncButton = (): void => {
     const theme = getTheme();
-    button.textContent = theme === "dark" ? "☀ Light" : "☾ Dark";
+    button.textContent = getThemeLabel(theme === "dark" ? "light" : "dark");
     button.setAttribute("aria-label", toggleLabels[theme]);
   };
 
