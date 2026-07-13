@@ -235,3 +235,23 @@ input::placeholder {
   color: var(--text-muted);
   font-size: 0.875rem;
 }
+
+.page-success .card--success {
+  position: fixed;
+  left: 50%;
+  top: 62%;
+  transform: translate(-50%, -50%);
+}
+
+.clock {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(1rem, 3vw, 1.35rem);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}

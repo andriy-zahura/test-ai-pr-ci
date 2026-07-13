@@ -46,6 +46,14 @@
     {
       "pattern": "src/success.ts",
       "docs": "docs/theme"
+    },
+    {
+      "pattern": "src/clock.ts",
+      "docs": "docs/clock"
+    },
+    {
+      "pattern": "success.html",
+      "docs": "docs/clock"
     }
   ]
 }

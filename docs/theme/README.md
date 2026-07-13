@@ -15,7 +15,7 @@ Covers theme tokens, switcher UI, persistence, and page bootstrap. Does not cove
 | `src/login.ts` | Calls `initTheme()` + `mountThemeSwitcher()` |
 | `src/success.ts` | Calls `initTheme()` + `mountThemeSwitcher()`; shows current theme label |
 | `index.html` | Inline boot script to apply theme before paint |
-| `success.html` | Inline boot script to apply theme before paint |
+| `success.html` | Inline boot script to apply theme before paint; `page-success` body class |
 
 ## User flows
 
@@ -79,6 +79,8 @@ Covers theme tokens, switcher UI, persistence, and page bootstrap. Does not cove
 | Button label | `☀ Light` in dark mode, `☾ Dark` in light mode (via `getThemeLabel()` for target theme) |
 | `aria-label` | `"Switch to dark theme"` or `"Switch to light theme"` |
 | Success theme label | `#theme-label`, class `hint`, text `Current theme: <label>` |
+| Clock | `.clock`, color `var(--text)` — see `docs/clock` |
+| Success layout | `body.page-success` — card fixed below viewport center |
 
 ## Themes
 
@@ -104,3 +106,5 @@ Both themes use CSS custom properties on `[data-theme="light"]` and `[data-theme
 - Theme persists across login ↔ success navigation
 - Success page shows current theme label; updates on toggle
 - `getThemeLabel()` used for switcher and success label text
+- Clock text uses `var(--text)` token (no hardcoded color)
+- Success page card offset via `.page-success .card--success`

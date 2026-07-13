@@ -15,7 +15,8 @@ Client-only authentication demo. No backend. Credentials stored in `localStorage
 |-------------------|-------------------------------------------|
 | `src/auth.ts`     | Validation, user store, session management |
 | `src/login.ts`    | Login/sign-up form wiring                 |
-| `src/success.ts`  | Session guard + logout                    |
+| `src/success.ts`  | Session guard, clock, logout              |
+| `src/clock.ts`    | Live clock on success page (see `docs/clock`) |
 
 ## User flows
 

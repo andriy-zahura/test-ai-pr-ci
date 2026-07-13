@@ -1,4 +1,5 @@
 import { getSession, logOut } from "./auth.js";
+import { mountClock } from "./clock.js";
 import { getThemeLabel, initTheme, mountThemeSwitcher } from "./theme.js";
 
 initTheme();
@@ -25,6 +26,7 @@ if (!session) {
   window.location.replace("index.html");
 } else {
   emailEl.textContent = session.email;
+  mountClock();
 }
 
 logoutButton.addEventListener("click", () => {
