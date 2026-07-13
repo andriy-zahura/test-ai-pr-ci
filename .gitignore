@@ -2,3 +2,7 @@ node_modules/
 dist/
 dist-cli/
 .review-context/
+
+# Local review reports (not committed)
+docs/reviews/**
+!docs/reviews/.gitkeep

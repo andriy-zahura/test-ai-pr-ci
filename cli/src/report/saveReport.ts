@@ -3,15 +3,20 @@ import { join } from "node:path";
 import { formatReport } from "./formatReport.js";
 import type { ReviewContext, ReviewResult } from "../review/types.js";
 
-function timestamp(): string {
-  const now = new Date();
-  const pad = (value: number) => String(value).padStart(2, "0");
+function pad(value: number): string {
+  return String(value).padStart(2, "0");
+}
 
-  return [
+function reviewTimestamp(now = new Date()): { day: string; time: string } {
+  const day = [
     now.getFullYear(),
     pad(now.getMonth() + 1),
     pad(now.getDate()),
-  ].join("-") + `_${pad(now.getHours())}-${pad(now.getMinutes())}`;
+  ].join("-");
+
+  const time = `${pad(now.getHours())}-${pad(now.getMinutes())}`;
+
+  return { day, time };
 }
 
 function contextSummary(context: ReviewContext): string {
@@ -34,11 +39,11 @@ export async function saveReport(
   result: ReviewResult,
   context: ReviewContext
 ): Promise<string> {
-  const reviewsDir = join(rootDir, "docs/reviews");
-  await mkdir(reviewsDir, { recursive: true });
+  const { day, time } = reviewTimestamp();
+  const dayDir = join(rootDir, "docs/reviews", day);
+  await mkdir(dayDir, { recursive: true });
 
-  const fileName = `${timestamp()}.md`;
-  const filePath = join(reviewsDir, fileName);
+  const filePath = join(dayDir, `${time}.md`);
   const markdown = formatReport(result, contextSummary(context));
 
   await writeFile(filePath, markdown, "utf8");

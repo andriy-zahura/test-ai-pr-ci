@@ -2,6 +2,7 @@ import { readdir, readFile, stat } from "node:fs/promises";
 import { join } from "node:path";
 import { simpleGit } from "simple-git";
 import { loadMapping, resolveDocDirs } from "./docMapper.js";
+import { findLatestReview } from "../report/findLatestReview.js";
 import type { ReviewContext } from "../review/types.js";
 
 async function readDirMarkdown(dirPath: string): Promise<Record<string, string>> {
@@ -32,26 +33,6 @@ async function readDirMarkdown(dirPath: string): Promise<Record<string, string>>
   }
 
   return result;
-}
-
-async function getLatestReview(reviewsDir: string): Promise<string | null> {
-  let entries: string[];
-  try {
-    entries = await readdir(reviewsDir);
-  } catch {
-    return null;
-  }
-
-  const reports = entries
-    .filter((name) => name.endsWith(".md") && name !== ".gitkeep")
-    .sort()
-    .reverse();
-
-  if (reports.length === 0) {
-    return null;
-  }
-
-  return readFile(join(reviewsDir, reports[0]), "utf8");
 }
 
 async function getStagedChanges(rootDir: string): Promise<{
@@ -92,7 +73,7 @@ export async function buildContext(rootDir: string): Promise<ReviewContext> {
     metadata = {};
   }
 
-  const previousReview = await getLatestReview(join(rootDir, "docs/reviews"));
+  const previousReview = await findLatestReview(join(rootDir, "docs/reviews"));
 
   return {
     generatedAt: new Date().toISOString(),
