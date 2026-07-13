@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { createReadStream } from "node:fs";
 import { createInterface } from "node:readline/promises";
 import { stdin as input, stdout as output } from "node:process";
 import { Command } from "commander";
@@ -6,6 +7,7 @@ import { buildContext } from "./context/buildContext.js";
 import { runIsolatedReview } from "./review/spawnReview.js";
 import { saveReport } from "./report/saveReport.js";
 import { listProviders } from "./review/reviewer.js";
+import { parsePrePushStdin, readStdinAll } from "./utils/prePush.js";
 
 function getRootDir(): string {
   return process.cwd();
@@ -40,8 +42,25 @@ function openFile(filePath: string): void {
   spawn(command, args, { detached: true, stdio: "ignore" }).unref();
 }
 
+function createPromptInterface() {
+  if (input.isTTY) {
+    return createInterface({ input, output });
+  }
+
+  if (process.platform === "win32") {
+    throw new Error(
+      "Interactive prompt requires a TTY. Run: npm run ai-review"
+    );
+  }
+
+  return createInterface({
+    input: createReadStream("/dev/tty"),
+    output,
+  });
+}
+
 async function promptAction(reportPath: string): Promise<"push" | "cancel"> {
-  const rl = createInterface({ input, output });
+  const rl = createPromptInterface();
 
   try {
     while (true) {
@@ -50,6 +69,11 @@ async function promptAction(reportPath: string): Promise<"push" | "cancel"> {
       )
         .trim()
         .toLowerCase();
+
+      if (!answer) {
+        console.log("Choose P, R, or C.");
+        continue;
+      }
 
       if (answer === "p" || answer === "push") {
         return "push";
@@ -72,8 +96,27 @@ async function promptAction(reportPath: string): Promise<"push" | "cancel"> {
   }
 }
 
+async function resolveReviewRange(): Promise<void> {
+  if (process.env.AI_REVIEW_RANGE?.trim()) {
+    return;
+  }
+
+  if (process.env.AI_REVIEW_PRE_PUSH !== "1") {
+    return;
+  }
+
+  const stdin = await readStdinAll();
+  const range = parsePrePushStdin(stdin);
+
+  if (range) {
+    process.env.AI_REVIEW_RANGE = range;
+  }
+}
+
 async function runReview(provider: string): Promise<void> {
   const rootDir = getRootDir();
+
+  await resolveReviewRange();
 
   console.log("Building review context...");
   const context = await buildContext(rootDir);
