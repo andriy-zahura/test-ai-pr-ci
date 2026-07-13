@@ -22,6 +22,30 @@
     {
       "pattern": "success.html",
       "docs": "docs/auth"
+    },
+    {
+      "pattern": "src/theme.ts",
+      "docs": "docs/theme"
+    },
+    {
+      "pattern": "src/styles.css",
+      "docs": "docs/theme"
+    },
+    {
+      "pattern": "index.html",
+      "docs": "docs/theme"
+    },
+    {
+      "pattern": "success.html",
+      "docs": "docs/theme"
+    },
+    {
+      "pattern": "src/login.ts",
+      "docs": "docs/theme"
+    },
+    {
+      "pattern": "src/success.ts",
+      "docs": "docs/theme"
     }
   ]
 }

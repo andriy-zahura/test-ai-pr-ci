@@ -1,4 +1,5 @@
 import { getSession, logIn, signUp } from "./auth.js";
+import { initTheme, mountThemeSwitcher } from "./theme.js";
 
 const form = document.getElementById("auth-form") as HTMLFormElement;
 const emailInput = document.getElementById("email") as HTMLInputElement;
@@ -33,6 +34,9 @@ function switchMode(): void {
   mode = mode === "login" ? "signup" : "login";
   updateModeUI();
 }
+
+initTheme();
+mountThemeSwitcher();
 
 if (getSession()) {
   window.location.replace("success.html");

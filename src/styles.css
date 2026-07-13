@@ -1,4 +1,9 @@
 :root {
+  --radius: 12px;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+[data-theme="dark"] {
   --bg: #0f1419;
   --surface: #1a2332;
   --surface-raised: #243044;
@@ -9,9 +14,35 @@
   --accent-hover: #2563eb;
   --danger: #f87171;
   --success: #34d399;
-  --radius: 12px;
   --shadow: 0 24px 48px rgba(0, 0, 0, 0.35);
-  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --bg-glow: rgba(59, 130, 246, 0.18);
+  --input-placeholder: #5a6b82;
+  --error-bg: rgba(248, 113, 113, 0.12);
+  --error-border: rgba(248, 113, 113, 0.3);
+  --badge-bg: rgba(52, 211, 153, 0.15);
+  --switcher-bg: rgba(26, 35, 50, 0.92);
+  --switcher-border: #2d3a4f;
+}
+
+[data-theme="light"] {
+  --bg: #eef2f7;
+  --surface: #ffffff;
+  --surface-raised: #f8fafc;
+  --border: #dbe3ef;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --danger: #dc2626;
+  --success: #059669;
+  --shadow: 0 20px 40px rgba(15, 23, 42, 0.08);
+  --bg-glow: rgba(37, 99, 235, 0.12);
+  --input-placeholder: #94a3b8;
+  --error-bg: rgba(220, 38, 38, 0.08);
+  --error-border: rgba(220, 38, 38, 0.25);
+  --badge-bg: rgba(5, 150, 105, 0.12);
+  --switcher-bg: rgba(255, 255, 255, 0.92);
+  --switcher-border: #dbe3ef;
 }
 
 *,
@@ -24,13 +55,38 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(59, 130, 246, 0.18), transparent),
+    radial-gradient(ellipse 80% 60% at 50% -10%, var(--bg-glow), transparent),
     var(--bg);
   color: var(--text);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 24px;
+}
+
+.theme-switcher {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 10;
+  padding: 8px 14px;
+  border: 1px solid var(--switcher-border);
+  border-radius: 999px;
+  background: var(--switcher-bg);
+  color: var(--text);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.theme-switcher:hover {
+  background: var(--surface-raised);
+}
+
+.theme-switcher:active {
+  transform: scale(0.98);
 }
 
 .card {
@@ -54,7 +110,7 @@ body {
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: rgba(52, 211, 153, 0.15);
+  background: var(--badge-bg);
   color: var(--success);
   font-size: 28px;
   margin-bottom: 20px;
@@ -103,15 +159,15 @@ input:focus {
 }
 
 input::placeholder {
-  color: #5a6b82;
+  color: var(--input-placeholder);
 }
 
 .error {
   margin: 0 0 16px;
   padding: 10px 12px;
   border-radius: 8px;
-  background: rgba(248, 113, 113, 0.12);
-  border: 1px solid rgba(248, 113, 113, 0.3);
+  background: var(--error-bg);
+  border: 1px solid var(--error-border);
   color: var(--danger);
   font-size: 0.875rem;
 }
