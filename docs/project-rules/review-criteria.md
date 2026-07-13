@@ -39,5 +39,6 @@ AI reviewer scores each category 0–10. Overall score is weighted average.
 ## Commit decision
 
 - Severity (low → critical) indicates priority in the report
+- **Overall score is capped by severity:** critical → ≤3, high → ≤5 (applied after LLM review)
 - The developer always chooses: commit anyway, open review, or cancel
 - The hook never auto-blocks

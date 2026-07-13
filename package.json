@@ -4,18 +4,31 @@
   "private": true,
   "type": "module",
   "description": "Local AI pre-commit review pipeline with doc-sync skill",
+  "bin": {
+    "ai-review": "dist-cli/cli.js"
+  },
+  "files": [
+    "dist-cli"
+  ],
   "scripts": {
     "build": "npm run build:cli",
-    "build:cli": "tsc -p cli/tsconfig.json",
-    "ai-review": "node dist-cli/cli.js run --provider mock",
+    "build:cli": "tsc -p cli/tsconfig.json && mkdir -p dist-cli/prompt && cp cli/src/prompt/systemPrompt.md dist-cli/prompt/",
+    "pack:local": "npm run build:cli && npm pack",
+    "prepack": "npm run build:cli",
+    "ai-review": "node dist-cli/cli.js run",
     "ai-review:init": "node dist-cli/cli.js init",
-    "prepare": "husky"
+    "prepare": "test -d .husky && husky || true"
+  },
+  "dependencies": {
+    "commander": "^13.1.0",
+    "simple-git": "^3.27.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
-    "commander": "^13.1.0",
     "husky": "^9.1.7",
-    "simple-git": "^3.27.0",
     "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

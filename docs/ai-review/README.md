@@ -4,10 +4,27 @@ Local review runs on **staged changes** before each `git commit`.
 
 ## Quick start
 
-1. Stage changes: `git add <files>`
-2. Commit: `git commit -m "message"`
-3. Review runs automatically (Husky pre-commit hook)
-4. Choose: **[P] Commit anyway** | **[R] Open report** | **[C] Cancel**
+1. Set API key: `npm run ai-review:init` (prompts) or copy `.env.example` → `.env`
+2. Stage changes: `git add <files>`
+3. Commit: `git commit -m "message"`
+4. Review runs automatically (Husky pre-commit hook)
+5. Choose: **[P] Commit anyway** | **[R] Open report** | **[C] Cancel**
+
+Provider: `cursor` | `openai` | `codex` | `anthropic`/`claude` | `gemini`/`google` | `mock`
+
+`.env` (gitignored) — set `AI_REVIEW_PROVIDER` and the matching key:
+
+| Provider | Env key | Default model |
+|----------|---------|---------------|
+| cursor | `CURSOR_API_KEY` | auto |
+| openai | `OPENAI_API_KEY` | gpt-4o-mini |
+| codex | `OPENAI_API_KEY` | gpt-4.1 |
+| claude | `ANTHROPIC_API_KEY` | claude-sonnet-4-20250514 |
+| gemini | `GOOGLE_API_KEY` | gemini-2.0-flash |
+
+Cursor key: Dashboard → Integrations → API Keys (`cursor_...`).
+
+Without a key, falls back to `mock` provider.
 
 ## What gets reviewed
 

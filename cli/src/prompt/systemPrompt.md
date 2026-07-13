@@ -30,6 +30,13 @@ Output valid JSON matching this schema:
 
 Scores are 0–10. Severity: low | medium | high | critical.
 
+**Overall score must reflect the worst issues, not an average of unrelated categories:**
+- Any **critical** issue → overallScore 0–3 (broken build, data loss, security hole, unusable UI)
+- Any **high** issue (no critical) → overallScore 0–5
+- Only **medium/low** → overallScore can be higher
+
+Category scores should be consistent with issues (e.g. broken DOM → architecture ≤ 4).
+
 Severity guides priority. The developer always chooses whether to commit.
 
 If no previous review exists, omit `previousReviewResolved` or use empty arrays.

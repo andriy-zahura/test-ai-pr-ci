@@ -1,4 +1,5 @@
 import type { ReviewContext, ReviewProvider, ReviewResult } from "../types.js";
+import { applySeverityCap } from "../parseResult.js";
 
 function hasAuthChanges(context: ReviewContext): boolean {
   return context.changedFiles.some((file) => file.includes("auth"));
@@ -113,7 +114,7 @@ export const mockProvider: ReviewProvider = {
       }
     }
 
-    return {
+    return applySeverityCap({
       overallScore,
       categories,
       issues,
@@ -126,6 +127,6 @@ export const mockProvider: ReviewProvider = {
         previousIssues.length > 0
           ? { resolved, unresolved, partiallyResolved }
           : undefined,
-    };
+    });
   },
 };

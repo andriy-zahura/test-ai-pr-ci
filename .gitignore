@@ -1,6 +1,11 @@
 node_modules/
 dist-cli/
 .review-context/
+*.tgz
+
+# Local env (API keys)
+.env
+.env.local
 
 # Local review reports (not committed)
 docs/reviews/**

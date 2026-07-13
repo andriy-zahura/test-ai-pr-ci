@@ -14,6 +14,7 @@ import {
   GITIGNORE_LINES,
   SCAFFOLD_FILES,
 } from "./templates.js";
+import { setupEnv } from "./setupEnv.js";
 
 type WriteResult = "created" | "skipped" | "overwritten";
 
@@ -110,16 +111,18 @@ async function patchPackageJson(rootDir: string): Promise<string[]> {
 
   const pkg = JSON.parse(await readFile(packagePath, "utf8")) as {
     scripts?: Record<string, string>;
+    devDependencies?: Record<string, string>;
   };
 
   pkg.scripts ??= {};
+  pkg.devDependencies ??= {};
   const added: string[] = [];
   const hasLocalCli = await exists(join(rootDir, "cli/tsconfig.json"));
 
   if (!pkg.scripts["ai-review"]) {
     pkg.scripts["ai-review"] = hasLocalCli
-      ? "node dist-cli/cli.js run --provider mock"
-      : "ai-review run --provider mock";
+      ? "node dist-cli/cli.js run"
+      : "ai-review run";
     added.push("ai-review");
   }
 
@@ -133,6 +136,16 @@ async function patchPackageJson(rootDir: string): Promise<string[]> {
       ? "node dist-cli/cli.js init"
       : "ai-review init";
     added.push("ai-review:init");
+  }
+
+  if (!pkg.devDependencies.husky) {
+    pkg.devDependencies.husky = "^9.1.7";
+    added.push("husky (devDependency)");
+  }
+
+  if (!pkg.scripts.prepare) {
+    pkg.scripts.prepare = "husky";
+    added.push("prepare");
   }
 
   if (added.length > 0) {
@@ -149,7 +162,15 @@ export interface InitResult {
   packageScripts: string[];
 }
 
-export async function runInit(rootDir: string, force: boolean): Promise<InitResult> {
+export interface InitOptions {
+  skipPrompt?: boolean;
+}
+
+export async function runInit(
+  rootDir: string,
+  force: boolean,
+  options: InitOptions = {}
+): Promise<InitResult> {
   const result: InitResult = {
     created: [],
     skipped: [],
@@ -177,6 +198,10 @@ export async function runInit(rootDir: string, force: boolean): Promise<InitResu
 
   const gitignoreStatus = await patchGitignore(rootDir, force);
   result[gitignoreStatus].push(".gitignore");
+
+  const envSetup = await setupEnv(rootDir, force, Boolean(options.skipPrompt));
+  result[envSetup.env].push(".env");
+  result[envSetup.example].push(".env.example");
 
   result.packageScripts = await patchPackageJson(rootDir);
 
@@ -210,9 +235,11 @@ export function printInitResult(result: InitResult): void {
   }
 
   console.log("\nNext steps:");
-  console.log("  1. Read docs/ai-review/README.md");
-  console.log("  2. Copy skill globally (optional): cp -r .cursor/skills/jti-review ~/.cursor/skills/");
-  console.log("  3. Before commit: invoke /jti-review in your agent");
-  console.log("  4. Edit review-mapping.json for your features");
-  console.log("  5. git add . && git commit");
+  console.log("  1. Check .env in this project (gitignored — your keys stay local)");
+  console.log("  2. Re-run init to change provider/model: npm run ai-review:init -- --force");
+  console.log("  3. Read docs/ai-review/README.md");
+  console.log("  4. Copy skill globally (optional): cp -r .cursor/skills/jti-review ~/.cursor/skills/");
+  console.log("  5. Before commit: invoke /jti-review in your agent");
+  console.log("  6. Edit review-mapping.json for your features");
+  console.log("  7. git add . && git commit");
 }

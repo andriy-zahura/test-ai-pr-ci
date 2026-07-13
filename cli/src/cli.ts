@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import { spawn } from "node:child_process";
 import { openSync } from "node:fs";
 import { createInterface } from "node:readline/promises";
@@ -10,6 +11,8 @@ import {
   formatDocCoverageAlerts,
 } from "./context/docCoverage.js";
 import { loadMapping } from "./context/docMapper.js";
+import { loadEnv, resolveDefaultProvider } from "./config/loadEnv.js";
+import { normalizeProviderName } from "./config/providerConfig.js";
 import { runInit, printInitResult } from "./init/scaffold.js";
 import { runIsolatedReview } from "./review/spawnReview.js";
 import { saveReport } from "./report/saveReport.js";
@@ -149,9 +152,13 @@ program
   .command("init")
   .description("Scaffold review config, agent docs, and pre-commit hook")
   .option("--force", "overwrite existing scaffold files")
-  .action(async (options: { force?: boolean }) => {
+  .option("--skip-prompt", "skip interactive API key prompt")
+  .action(async (options: { force?: boolean; skipPrompt?: boolean }) => {
     try {
-      const result = await runInit(getRootDir(), Boolean(options.force));
+      await loadEnv(getRootDir());
+      const result = await runInit(getRootDir(), Boolean(options.force), {
+        skipPrompt: Boolean(options.skipPrompt),
+      });
       printInitResult(result);
     } catch (error) {
       console.error(error instanceof Error ? error.message : error);
@@ -162,15 +169,20 @@ program
 program
   .command("run")
   .description("Review staged changes before commit")
-  .option("--provider <name>", "review provider", "mock")
-  .action(async (options: { provider: string }) => {
+  .option("--provider <name>", "review provider (default: .env or mock)")
+  .action(async (options: { provider?: string }) => {
     try {
-      if (!listProviders().includes(options.provider)) {
+      await loadEnv(getRootDir());
+      const provider = normalizeProviderName(
+        options.provider ?? resolveDefaultProvider()
+      );
+
+      if (!listProviders().includes(provider)) {
         throw new Error(
-          `Unknown provider "${options.provider}". Available: ${listProviders().join(", ")}`
+          `Unknown provider "${provider}". Available: ${listProviders().join(", ")}`
         );
       }
-      await runReview(options.provider);
+      await runReview(provider);
     } catch (error) {
       console.error(error instanceof Error ? error.message : error);
       process.exit(1);

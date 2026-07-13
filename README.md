@@ -11,11 +11,12 @@ Local pre-commit review pipeline. Syncs feature docs before commit. Runs an isol
 ```bash
 npm install
 npm run build:cli
-npm run ai-review:init
+npm run ai-review:init   # prompts for OPENAI_API_KEY
 ```
 
 Init scaffolds:
 
+- `.env.example` + `.env` (API key prompt)
 - `.husky/pre-commit` hook
 - `review-mapping.json`
 - `docs/project-rules/`, `docs/ai-review/`
@@ -86,18 +87,60 @@ npm run ai-review:init  # scaffold config + docs + skill
 npm run ai-review         # run review on staged files (same as hook)
 ```
 
-Provider: `mock` (no API key). Swap in `cli/src/review/providers/` for real LLM.
+Provider: `cursor` | `openai` | `codex` | `anthropic`/`claude` | `gemini`/`google` | `mock`
+
+```bash
+npm run ai-review:init   # pick provider + enter API key
+# or: cp .env.example .env and fill in CURSOR_API_KEY / OPENAI_API_KEY / etc.
+```
+
+| Provider | Env key | Notes |
+|----------|---------|-------|
+| **cursor** | `CURSOR_API_KEY` | From Cursor Dashboard → Integrations |
+| openai | `OPENAI_API_KEY` | Chat Completions API |
+| codex | `OPENAI_API_KEY` | Same API, codex-tuned default model |
+| claude | `ANTHROPIC_API_KEY` | Anthropic Messages API |
+| gemini | `GOOGLE_API_KEY` | Google AI Studio key |
+
+Set `AI_REVIEW_PROVIDER=cursor` (or openai, codex, anthropic, gemini). Falls back to `mock` without a key.
 
 ---
 
 ## Add to existing project
 
+### Option A — local `.tgz` (no npm registry)
+
 ```bash
-# copy or npm install package (when published)
-npm run ai-review:init
-# edit review-mapping.json for your features
-# create docs/<feature>/README.md per template
+# In jti-ai-review repo
+npm run pack:local
+# → jti-ai-review-0.1.0.tgz
+
+# In your other project
+npm install -D /absolute/path/to/jti-ai-review-0.1.0.tgz
+npx ai-review init
+npm install   # installs husky from init + wires prepare
+git add . && git commit
 ```
+
+### Option B — `npm link`
+
+```bash
+# In jti-ai-review repo
+npm run build:cli && npm link
+
+# In your other project
+npm link jti-ai-review
+npx ai-review init
+```
+
+### Option C — direct path (no install)
+
+```bash
+node /absolute/path/to/test-ai-pr-ci/dist-cli/cli.js init
+# then set package.json scripts to that node path manually
+```
+
+After init, edit `review-mapping.json` and create `docs/<feature>/README.md` per template.
 
 ---
 

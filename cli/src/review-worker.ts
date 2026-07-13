@@ -1,4 +1,5 @@
 import { stdin } from "node:process";
+import { loadEnv } from "./config/loadEnv.js";
 import { getProvider } from "./review/reviewer.js";
 import type { ReviewContext, ReviewResult } from "./review/types.js";
 
@@ -30,6 +31,8 @@ async function main(): Promise<void> {
     console.error("Review worker must run as isolated subprocess.");
     process.exit(1);
   }
+
+  await loadEnv(process.cwd());
 
   const { provider } = parseArgs();
   const context = await readContextFromStdin();
