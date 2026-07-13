@@ -14,6 +14,11 @@ function readUsers(): UserStore {
     return {};
   }
 
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+      return {};
+    }
     return parsed as UserStore;
   } catch {
     return {};
