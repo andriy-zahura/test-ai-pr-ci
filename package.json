@@ -8,11 +8,13 @@
     "build:cli": "tsc -p cli/tsconfig.json",
     "watch": "tsc --watch",
     "start": "node scripts/dev-server.mjs",
-    "ai-review": "node dist-cli/cli.js run --provider mock"
+    "ai-review": "node dist-cli/cli.js run --provider mock",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@types/node": "^22.10.5",
     "commander": "^13.1.0",
+    "husky": "^9.1.7",
     "simple-git": "^3.27.0",
     "typescript": "^5.7.3"
   }
