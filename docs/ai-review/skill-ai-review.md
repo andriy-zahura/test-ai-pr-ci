@@ -1,12 +1,22 @@
-# commit-review skill (portable copy)
+# JTI review skill (portable reference)
 
-Copy this file to one of:
+Invoke `/jti-review` before commit. **Context sync only** — does not run the review pipeline.
 
-- **Project:** `.cursor/skills/commit-review/SKILL.md` (already created by init if using Cursor)
-- **Global:** `~/.cursor/skills/commit-review/SKILL.md` (all repos)
+## Skill location
 
-Then invoke with `/commit-review` before `git commit`.
+`.cursor/skills/jti-review/SKILL.md`
 
----
+Copy globally: `cp -r .cursor/skills/jti-review ~/.cursor/skills/`
 
-See `.cursor/skills/commit-review/SKILL.md` in this repo for the full skill content.
+## Two agents
+
+1. **Dev agent** — `/jti-review` updates mapping + feature docs
+2. **Commit reviewer** — runs on `git commit` only
+
+## FORBIDDEN in /jti-review
+
+- `npm run ai-review`
+- Scores, issue lists, review reports
+- Acting as the commit reviewer
+
+Do **not** use Cursor's built-in `/code-review` command for this workflow.

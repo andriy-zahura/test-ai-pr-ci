@@ -1,3 +1,5 @@
+import { JTI_REVIEW_SKILL } from "./skillContent.js";
+
 export interface ScaffoldFile {
   path: string;
   content: string;
@@ -51,7 +53,7 @@ Read before changing mapped code or docs:
 2. [MAPPING.md](./MAPPING.md) — how to edit \`review-mapping.json\`
 3. [FEATURE-DOC-TEMPLATE.md](./FEATURE-DOC-TEMPLATE.md) — how to write feature docs
 
-**Before commit:** run \`/commit-review\` in your agent (see [skill-ai-review.md](./skill-ai-review.md)).
+**Before commit:** run \`/jti-review\` — context sync only, not code review.
 
 ## Severity scale
 
@@ -277,7 +279,7 @@ This repo uses a local AI pre-commit review. **Read before changing code or docs
 
 When adding features: update \`review-mapping.json\` + create \`docs/<feature>/README.md\` (see [FEATURE-DOC-TEMPLATE.md](docs/ai-review/FEATURE-DOC-TEMPLATE.md)).
 
-**Before commit:** invoke \`/commit-review\` — or copy [skill-ai-review.md](docs/ai-review/skill-ai-review.md) to \`~/.cursor/skills/commit-review/SKILL.md\`.
+**Before commit:** invoke \`/jti-review\` (syncs docs/mapping — does **not** run the review). Copy \`.cursor/skills/jti-review\` to \`~/.cursor/skills/\` for global use.
 
 <!-- /ai-review -->
 `,
@@ -345,90 +347,33 @@ Severity guides priority. The developer always chooses: commit anyway, open repo
   },
   {
     path: "docs/ai-review/skill-ai-review.md",
-    content: `# commit-review skill (portable copy)
+    content: `# JTI review skill (portable reference)
 
-Copy this file to one of:
+Invoke \`/jti-review\` before commit. **Context sync only** — does not run the review pipeline.
 
-- **Project:** \`.cursor/skills/commit-review/SKILL.md\` (already created by init if using Cursor)
-- **Global:** \`~/.cursor/skills/commit-review/SKILL.md\` (all repos)
+## Skill location
 
-Then invoke with \`/commit-review\` before \`git commit\`.
+\`.cursor/skills/jti-review/SKILL.md\`
 
----
+Copy globally: \`cp -r .cursor/skills/jti-review ~/.cursor/skills/\`
 
-See \`.cursor/skills/commit-review/SKILL.md\` in this repo for the full skill content.
+## Two agents
+
+1. **Dev agent** — \`/jti-review\` updates mapping + feature docs
+2. **Commit reviewer** — runs on \`git commit\` only
+
+## FORBIDDEN in /jti-review
+
+- \`npm run ai-review\`
+- Scores, issue lists, review reports
+- Acting as the commit reviewer
+
+Do **not** use Cursor's built-in \`/code-review\` command for this workflow.
 `,
   },
   {
-    path: ".cursor/skills/commit-review/SKILL.md",
-    content: `---
-name: commit-review
-description: >-
-  Sync review-mapping.json and feature docs with staged changes before commit.
-  Use when the user invokes /commit-review, or before git commit, or when doc
-  coverage alerts appear in the pre-commit hook.
-disable-model-invocation: true
----
-
-# Commit Review — sync docs before commit
-
-Prepare staged code for the AI pre-commit review pipeline.
-
-## When to use
-
-- User invokes \`/commit-review\`
-- User says "prepare for commit" or "sync docs before commit"
-- Pre-commit hook showed doc coverage alerts
-
-## Read first
-
-1. \`docs/ai-review/AGENT-INSTRUCTIONS.md\`
-2. \`docs/ai-review/MAPPING.md\`
-3. \`review-mapping.json\`
-4. \`docs/ai-review/FEATURE-DOC-TEMPLATE.md\`
-
-## Workflow
-
-\`\`\`text
-1. Get staged files
-   → git diff --cached --name-only
-
-2. For each staged code file (not docs/reviews, not docs/ai-review):
-   a. Check review-mapping.json for a matching pattern
-   b. If unmapped → add mapping entry
-   c. If mapped → ensure docs/<feature>/README.md exists and matches staged code
-
-3. Update feature docs to reflect current behavior
-   - User flows, validation, errors, storage contracts
-
-4. Stage doc changes with code
-   → git add review-mapping.json docs/<feature>/
-
-5. Tell user to commit
-   → git commit -m "..."
-   → pre-commit review runs automatically
-\`\`\`
-
-## Output checklist
-
-Report to the user:
-
-- [ ] Staged files listed
-- [ ] Mapping entries added/updated (or already correct)
-- [ ] Feature docs created/updated (or already current)
-- [ ] All doc changes staged
-- [ ] Ready to commit
-
-## If nothing staged
-
-Tell user to \`git add\` their changes first, then run \`/commit-review\` again.
-
-## Do not
-
-- Skip feature docs when code behavior changed
-- Leave files unmapped in review-mapping.json
-- Commit without staging docs + mapping together
-`,
+    path: ".cursor/skills/jti-review/SKILL.md",
+    content: JTI_REVIEW_SKILL,
   },
   {
     path: "docs/reviews/.gitkeep",

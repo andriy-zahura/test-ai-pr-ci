@@ -122,7 +122,7 @@ export function formatDocCoverageAlerts(issues: DocCoverageIssue[]): string {
   }
 
   lines.push(
-    "\nFix docs/mapping or run /commit-review with your agent before committing.\n"
+    "\nFix docs/mapping or run /jti-review before committing.\n"
   );
 
   return lines.join("\n");

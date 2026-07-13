@@ -211,8 +211,8 @@ export function printInitResult(result: InitResult): void {
 
   console.log("\nNext steps:");
   console.log("  1. Read docs/ai-review/README.md");
-  console.log("  2. Copy skill globally (optional): cp -r .cursor/skills/commit-review ~/.cursor/skills/");
-  console.log("  3. Before commit: invoke /commit-review in your agent");
+  console.log("  2. Copy skill globally (optional): cp -r .cursor/skills/jti-review ~/.cursor/skills/");
+  console.log("  3. Before commit: invoke /jti-review in your agent");
   console.log("  4. Edit review-mapping.json for your features");
   console.log("  5. git add . && git commit");
 }

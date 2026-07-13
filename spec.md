@@ -12,7 +12,7 @@ The reviewer **must always run as a completely fresh AI session**. It must never
 
 1. A developer writes code using any AI coding assistant (Composer, Claude Code, Codex, etc.) or manually.
 
-2. The developer updates feature documentation under `docs/<feature>/` (or runs `/commit-review` with their agent to sync mapping + docs).
+2. The developer updates feature documentation under `docs/<feature>/` (or runs `/jti-review` with their agent to sync mapping + docs).
 
 3. The developer stages changes with `git add`.
 
@@ -57,7 +57,7 @@ Review reports are local only (gitignored), grouped by day.
 [C] Cancel commit
 ```
 
-12. **Doc coverage alerts** appear if staged code lacks mapping, feature README, or doc updates in the same commit. Fix or run `/commit-review`.
+12. **Doc coverage alerts** appear if staged code lacks mapping, feature README, or doc updates in the same commit. Fix or run `/jti-review`.
 
 13. The commit is **never blocked automatically**. The developer always decides.
 

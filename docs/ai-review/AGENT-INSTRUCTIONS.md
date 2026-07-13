@@ -1,5 +1,18 @@
 # Agent Instructions — AI Pre-Commit Review
 
+You are the **development agent** in this repo. You are **not** the commit reviewer.
+
+## Two agents
+
+| Role | When | Job |
+|------|------|-----|
+| **You** | During coding, `/jti-review` skill | Write code, mapping, feature docs |
+| **Commit reviewer** | On `git commit` only | Fresh isolated session, scores staged diff |
+
+When the user invokes `/jti-review`, **sync context only** — do not run `npm run ai-review` or generate review reports.
+
+Do not use Cursor's built-in `/code-review` command for this workflow.
+
 You are working in a repo with a local pre-commit review pipeline. Follow this contract.
 
 ## Before writing code
