@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Auth Success</title>
+    <link rel="stylesheet" href="src/styles.css" />
+  </head>
+  <body>
+    <main class="card card--success">
+      <div class="badge" aria-hidden="true">✓</div>
+      <h1>Auth Success</h1>
+      <p class="subtitle">You are signed in as</p>
+      <p id="user-email" class="user-email"></p>
+      <p class="hint">Session stored in local storage.</p>
+
+      <button id="logout" class="btn btn-outline" type="button">Log out</button>
+    </main>
+
+    <script type="module" src="dist/success.js"></script>
+  </body>
+</html>

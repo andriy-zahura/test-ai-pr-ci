@@ -1,0 +1,27 @@
+{
+  "alwaysInclude": [
+    "docs/project-rules"
+  ],
+  "mappings": [
+    {
+      "pattern": "src/auth.ts",
+      "docs": "docs/auth"
+    },
+    {
+      "pattern": "src/login.ts",
+      "docs": "docs/auth"
+    },
+    {
+      "pattern": "src/success.ts",
+      "docs": "docs/auth"
+    },
+    {
+      "pattern": "index.html",
+      "docs": "docs/auth"
+    },
+    {
+      "pattern": "success.html",
+      "docs": "docs/auth"
+    }
+  ]
+}

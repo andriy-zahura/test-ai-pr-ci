@@ -1,0 +1,19 @@
+{
+  "name": "test-ai-pr-ci",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc && npm run build:cli",
+    "build:cli": "tsc -p cli/tsconfig.json",
+    "watch": "tsc --watch",
+    "start": "node scripts/dev-server.mjs",
+    "ai-review": "node dist-cli/cli.js run --provider mock"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "commander": "^13.1.0",
+    "simple-git": "^3.27.0",
+    "typescript": "^5.7.3"
+  }
+}
