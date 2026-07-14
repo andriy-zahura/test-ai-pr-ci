@@ -169,7 +169,7 @@ program
 program
   .command("run")
   .description("Review staged changes before commit")
-  .option("--provider <name>", "review provider (default: .env or mock)")
+  .option("--provider <name>", "review provider (default: .env.jti-ai-review or mock)")
   .action(async (options: { provider?: string }) => {
     try {
       await loadEnv(getRootDir());

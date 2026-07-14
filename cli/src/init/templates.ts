@@ -1,4 +1,5 @@
 import { JTI_REVIEW_SKILL } from "./skillContent.js";
+import { JTI_ENV_EXAMPLE_FILE, JTI_ENV_FILE } from "../config/envPaths.js";
 
 export interface ScaffoldFile {
   path: string;
@@ -15,7 +16,7 @@ Local review runs on **staged changes** before each \`git commit\`.
 
 ## Quick start
 
-1. Set API key: \`npm run ai-review:init\` (prompts) or copy \`.env.example\` → \`.env\`
+1. Set API key: \`npm run ai-review:init\` (prompts) or copy \`${JTI_ENV_EXAMPLE_FILE}\` → \`${JTI_ENV_FILE}\`
 2. Stage changes: \`git add <files>\`
 3. Commit: \`git commit -m "message"\`
 4. Review runs automatically (Husky pre-commit hook)
@@ -23,7 +24,7 @@ Local review runs on **staged changes** before each \`git commit\`.
 
 Provider: \`cursor\` | \`openai\` | \`codex\` | \`anthropic\`/\`claude\` | \`gemini\`/\`google\` | \`mock\`
 
-\`.env\` (gitignored) — set \`AI_REVIEW_PROVIDER\` and the matching key:
+\`${JTI_ENV_FILE}\` (gitignored) — set \`AI_REVIEW_PROVIDER\` and the matching key:
 
 | Provider | Env key | Default model |
 |----------|---------|---------------|
@@ -53,14 +54,30 @@ The reviewer does **not** see your full repo or IDE chat history.
 ## Repo layout
 
 \`\`\`text
-review-mapping.json       # which files → which docs
+.env.jti-ai-review.example  # committed template (safe to commit)
+.env.jti-ai-review          # your API keys (gitignored)
+review-mapping.json         # which files → which docs
 docs/
-  ai-review/              # this guide + agent instructions
-  project-rules/          # coding standards, review criteria
-  <feature>/              # feature specs (e.g. auth/, payments/)
-  reviews/                # local reports, gitignored, grouped by day
-.husky/pre-commit         # runs ai-review
+  ai-review/                # this guide + agent instructions
+  project-rules/            # coding standards, review criteria
+  <feature>/                # feature specs (e.g. auth/, payments/)
+  reviews/                  # local reports, gitignored, grouped by day
+.husky/pre-commit           # runs ai-review
 \`\`\`
+
+## Configuration
+
+jti-ai-review keeps its config in a **dedicated env file** — like Sentry's separate config. \`ai-review init\` never modifies your project's \`.env\` or \`.env.example\`.
+
+| File | Committed? | Purpose |
+|------|------------|---------|
+| \`.env.jti-ai-review.example\` | Yes | Template |
+| \`.env.jti-ai-review\` | No | API keys + provider |
+| \`.env.jti-ai-review.local\` | No | Optional overrides |
+
+Re-run \`npm run ai-review:init -- --force\` to change provider/model. Existing keys in \`.env.jti-ai-review\` are preserved unless you enter new values.
+
+Load order at review time (later wins): \`.env\` → \`.env.local\` → \`.env.jti-ai-review\` → \`.env.jti-ai-review.local\`.
 
 ## For AI coding agents
 
@@ -95,6 +112,8 @@ You are working in a repo with a local pre-commit review pipeline. Follow this c
 2. Read \`review-mapping.json\`
 3. If touching a feature area, read its doc under \`docs/<feature>/\`
 4. Read \`docs/project-rules/\`
+
+API keys for the commit reviewer live in \`.env.jti-ai-review\` — not the project \`.env\`. Do not move or overwrite consumer env files when setting up review.
 
 ## When adding or changing a feature
 
@@ -408,9 +427,9 @@ npm run ai-review
 
 export const GITIGNORE_LINES = [
   "",
-  "# Local env (API keys)",
-  ".env",
-  ".env.local",
+  "# jti-ai-review env (API keys)",
+  ".env.jti-ai-review",
+  ".env.jti-ai-review.local",
   "",
   "# Local review reports (not committed)",
   "docs/reviews/**",

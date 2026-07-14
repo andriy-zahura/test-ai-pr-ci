@@ -1,13 +1,12 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { ENV_LOAD_ORDER, envSetupHint } from "./envPaths.js";
 import {
   detectConfiguredProvider,
   getProviderDefinition,
   normalizeProviderName,
   providerHasCredentials,
 } from "./providerConfig.js";
-
-const ENV_FILES = [".env", ".env.local"];
 
 function parseEnvLine(line: string): { key: string; value: string } | null {
   const trimmed = line.trim();
@@ -34,13 +33,13 @@ function parseEnvLine(line: string): { key: string; value: string } | null {
 }
 
 export async function loadEnv(rootDir: string): Promise<void> {
-  for (const file of ENV_FILES) {
+  for (const file of ENV_LOAD_ORDER) {
     const path = join(rootDir, file);
     try {
       const raw = await readFile(path, "utf8");
       for (const line of raw.split("\n")) {
         const parsed = parseEnvLine(line);
-        if (parsed && process.env[parsed.key] === undefined) {
+        if (parsed) {
           process.env[parsed.key] = parsed.value;
         }
       }
@@ -76,5 +75,5 @@ export function missingKeyMessage(provider: string): string {
     return `Provider "${provider}" is not configured.`;
   }
 
-  return `${def.keyPrompt} is missing for provider "${provider}". Add it to .env or run: npm run ai-review:init`;
+  return `${def.keyPrompt} is missing for provider "${provider}". ${envSetupHint()}`;
 }

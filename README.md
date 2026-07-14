@@ -21,9 +21,11 @@ Pre-commit hook here only runs `build:cli` (compile check).
 To dogfood the full review flow locally:
 
 ```bash
-node dist-cli/cli.js init --skip-prompt
-node dist-cli/cli.js run    # after git add
+node dist-cli/cli.js init --skip-prompt   # creates .env.jti-ai-review
+node dist-cli/cli.js run                  # after git add
 ```
+
+Keys go in `.env.jti-ai-review` (gitignored), not `.env`.
 
 ---
 
@@ -38,9 +40,36 @@ npm install
 Init scaffolds in the **consumer project**:
 
 - `.husky/pre-commit` → runs `ai-review` on commit
-- `.env` / `.env.example`
+- `.env.jti-ai-review` / `.env.jti-ai-review.example` — dedicated config (see below)
 - `review-mapping.json`, `docs/project-rules/`, `docs/ai-review/`
 - `.cursor/skills/jti-review/`
+
+### Configuration (env files)
+
+jti-ai-review uses its **own env file** (Sentry-style). Init never writes to your project's `.env` or `.env.example`.
+
+| File | Committed? | Purpose |
+|------|------------|---------|
+| `.env.jti-ai-review.example` | Yes | Template with all provider keys |
+| `.env.jti-ai-review` | No (gitignored) | Your API keys and provider choice |
+| `.env.jti-ai-review.local` | No (gitignored) | Optional local overrides |
+
+**First-time setup:**
+
+```bash
+npx ai-review init          # wizard writes .env.jti-ai-review
+# or manually:
+cp .env.jti-ai-review.example .env.jti-ai-review
+# then edit AI_REVIEW_PROVIDER + matching API key
+```
+
+**Change provider later:**
+
+```bash
+npm run ai-review:init -- --force
+```
+
+At runtime, env is loaded in order (later wins): `.env` → `.env.local` → `.env.jti-ai-review` → `.env.jti-ai-review.local`. Keys in `.env.jti-ai-review` take precedence. If you already had review keys in `.env`, they still work until you migrate.
 
 ### Workflow (consumer repo)
 
@@ -54,15 +83,15 @@ Init scaffolds in the **consumer project**:
 
 ## Providers
 
-| Provider | Env key |
-|----------|---------|
-| cursor | `CURSOR_API_KEY` |
-| openai | `OPENAI_API_KEY` |
-| codex | `OPENAI_API_KEY` |
-| claude | `ANTHROPIC_API_KEY` |
-| gemini | `GOOGLE_API_KEY` |
+Set `AI_REVIEW_PROVIDER` in `.env.jti-ai-review`. Falls back to `mock` without a key.
 
-Set `AI_REVIEW_PROVIDER` in `.env`. Falls back to `mock` without a key.
+| Provider | Env key | Default model |
+|----------|---------|---------------|
+| cursor | `CURSOR_API_KEY` | auto |
+| openai | `OPENAI_API_KEY` | gpt-4o-mini |
+| codex | `OPENAI_API_KEY` | gpt-4.1 |
+| claude | `ANTHROPIC_API_KEY` | claude-fable-5 |
+| gemini | `GOOGLE_API_KEY` | gemini-2.0-flash |
 
 For reliable reviews, prefer **anthropic** or **openai** direct API keys over cursor Cloud Agents.
 

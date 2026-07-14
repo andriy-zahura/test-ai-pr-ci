@@ -15,6 +15,10 @@ import {
   SCAFFOLD_FILES,
 } from "./templates.js";
 import { setupEnv } from "./setupEnv.js";
+import {
+  JTI_ENV_EXAMPLE_FILE,
+  JTI_ENV_FILE,
+} from "../config/envPaths.js";
 
 type WriteResult = "created" | "skipped" | "overwritten";
 
@@ -203,11 +207,11 @@ export async function runInit(
 
   const envSetup = await setupEnv(rootDir, force, Boolean(options.skipPrompt));
   if (envSetup.env === "merged") {
-    result.merged.push(".env");
+    result.merged.push(JTI_ENV_FILE);
   } else {
-    result[envSetup.env].push(".env");
+    result[envSetup.env].push(JTI_ENV_FILE);
   }
-  result[envSetup.example].push(".env.example");
+  result[envSetup.example].push(JTI_ENV_EXAMPLE_FILE);
 
   result.packageScripts = await patchPackageJson(rootDir);
 
@@ -248,7 +252,7 @@ export function printInitResult(result: InitResult): void {
   }
 
   console.log("\nNext steps:");
-  console.log("  1. Check .env in this project (gitignored — your keys stay local)");
+  console.log(`  1. Check ${JTI_ENV_FILE} (gitignored — your keys stay local)`);
   console.log("  2. Re-run init to change provider/model: npm run ai-review:init -- --force");
   console.log("  3. Read docs/ai-review/README.md");
   console.log("  4. Copy skill globally (optional): cp -r .cursor/skills/jti-review ~/.cursor/skills/");

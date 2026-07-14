@@ -18,12 +18,16 @@ import {
 } from "../config/providerConfig.js";
 import { fetchCursorModels } from "./fetchCursorModels.js";
 import { mergeEnvContent, selectionToEnvPatch, type InitEnvSelection } from "./envMerge.js";
+import {
+  JTI_ENV_EXAMPLE_FILE,
+  JTI_ENV_FILE,
+} from "../config/envPaths.js";
 
 type WriteResult = "created" | "skipped" | "overwritten" | "merged";
 
 export type { InitEnvSelection } from "./envMerge.js";
 
-export const ENV_EXAMPLE = `# AI review — copy to .env and fill in your provider key
+export const ENV_EXAMPLE = `# jti-ai-review — copy to ${JTI_ENV_FILE} and fill in your provider key
 
 # Provider: cursor | openai | codex | anthropic | claude | gemini | google | mock
 AI_REVIEW_PROVIDER=cursor
@@ -85,7 +89,7 @@ function providerMenu(): void {
     console.log(`  ${index + 1}. ${def.label}`);
   });
   console.log(`  ${PROVIDER_DEFINITIONS.length + 1}. Other (enter provider name)`);
-  console.log(`  ${PROVIDER_DEFINITIONS.length + 2}. Skip — use mock until .env is set\n`);
+  console.log(`  ${PROVIDER_DEFINITIONS.length + 2}. Skip — use mock until ${JTI_ENV_FILE} is set\n`);
 }
 
 async function promptProvider(rl: Interface): Promise<string | null> {
@@ -268,11 +272,19 @@ export async function setupEnv(
   force: boolean,
   skipPrompt: boolean
 ): Promise<EnvSetupResult> {
-  const examplePath = join(rootDir, ".env.example");
-  const envPath = join(rootDir, ".env");
+  const examplePath = join(rootDir, JTI_ENV_EXAMPLE_FILE);
+  const envPath = join(rootDir, JTI_ENV_FILE);
 
   const exampleExists = await exists(examplePath);
-  await writeFile(examplePath, ENV_EXAMPLE, "utf8");
+  let exampleStatus: WriteResult = "skipped";
+
+  if (!exampleExists) {
+    await writeFile(examplePath, ENV_EXAMPLE, "utf8");
+    exampleStatus = "created";
+  } else if (force) {
+    await writeFile(examplePath, ENV_EXAMPLE, "utf8");
+    exampleStatus = "overwritten";
+  }
 
   let existingEnv: string | null = null;
   let envExists = false;
@@ -287,7 +299,7 @@ export async function setupEnv(
   if (envExists && !force) {
     return {
       env: "skipped",
-      example: exampleExists ? "skipped" : "created",
+      example: exampleStatus,
     };
   }
 
@@ -307,7 +319,7 @@ export async function setupEnv(
   if (envExists && merged === existingEnv?.replace(/\n*$/, "\n")) {
     return {
       env: "skipped",
-      example: exampleExists ? "skipped" : "created",
+      example: exampleStatus,
     };
   }
 
@@ -315,6 +327,6 @@ export async function setupEnv(
 
   return {
     env: envExists ? "merged" : "created",
-    example: exampleExists ? "overwritten" : "created",
+    example: exampleStatus,
   };
 }

@@ -6,6 +6,8 @@ dist-cli/
 # Local env (API keys) — contributors only, not published
 .env
 .env.local
+.env.jti-ai-review
+.env.jti-ai-review.local
 
 # Local dogfood reports if you run ai-review manually
 docs/reviews/

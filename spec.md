@@ -65,6 +65,22 @@ Review reports are local only (gitignored), grouped by day.
 
 ---
 
+## Configuration
+
+API keys and provider choice live in a **dedicated env file** (Sentry-style):
+
+| File | Purpose |
+|------|---------|
+| `.env.jti-ai-review.example` | Committed template |
+| `.env.jti-ai-review` | Gitignored — actual keys |
+| `.env.jti-ai-review.local` | Gitignored — optional overrides |
+
+`ai-review init` creates/updates only these files. It does **not** touch the consumer's `.env` or `.env.example`.
+
+Set `AI_REVIEW_PROVIDER` plus the matching API key env var. Without a key, the pipeline falls back to `mock`.
+
+---
+
 ## Documentation Mapping
 
 Each feature has its own documentation:

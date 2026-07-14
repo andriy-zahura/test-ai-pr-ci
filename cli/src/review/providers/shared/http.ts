@@ -1,3 +1,5 @@
+import { envSetupHint } from "../../../config/envPaths.js";
+
 export async function readErrorBody(response: Response): Promise<string> {
   try {
     return await response.text();
@@ -13,7 +15,7 @@ export function requireEnvValue(
 ): string {
   if (!value?.trim()) {
     throw new Error(
-      `${envName} is missing for provider "${provider}". Add it to .env or run: npm run ai-review:init`
+      `${envName} is missing for provider "${provider}". ${envSetupHint()}`
     );
   }
 
