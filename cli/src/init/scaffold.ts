@@ -159,6 +159,7 @@ export interface InitResult {
   created: string[];
   skipped: string[];
   overwritten: string[];
+  merged: string[];
   packageScripts: string[];
 }
 
@@ -175,6 +176,7 @@ export async function runInit(
     created: [],
     skipped: [],
     overwritten: [],
+    merged: [],
     packageScripts: [],
   };
 
@@ -200,7 +202,11 @@ export async function runInit(
   result[gitignoreStatus].push(".gitignore");
 
   const envSetup = await setupEnv(rootDir, force, Boolean(options.skipPrompt));
-  result[envSetup.env].push(".env");
+  if (envSetup.env === "merged") {
+    result.merged.push(".env");
+  } else {
+    result[envSetup.env].push(".env");
+  }
   result[envSetup.example].push(".env.example");
 
   result.packageScripts = await patchPackageJson(rootDir);
@@ -219,6 +225,13 @@ export function printInitResult(result: InitResult): void {
   if (result.overwritten.length > 0) {
     console.log("Overwritten:");
     for (const file of result.overwritten) {
+      console.log(`  ~ ${file}`);
+    }
+  }
+
+  if (result.merged.length > 0) {
+    console.log("Merged (existing keys preserved):");
+    for (const file of result.merged) {
       console.log(`  ~ ${file}`);
     }
   }

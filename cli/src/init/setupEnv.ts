@@ -17,14 +17,11 @@ import {
   type ProviderDefinition,
 } from "../config/providerConfig.js";
 import { fetchCursorModels } from "./fetchCursorModels.js";
+import { mergeEnvContent, selectionToEnvPatch, type InitEnvSelection } from "./envMerge.js";
 
-type WriteResult = "created" | "skipped" | "overwritten";
+type WriteResult = "created" | "skipped" | "overwritten" | "merged";
 
-export interface InitEnvSelection {
-  provider: string | null;
-  model: string | null;
-  apiKey: string | null;
-}
+export type { InitEnvSelection } from "./envMerge.js";
 
 export const ENV_EXAMPLE = `# AI review — copy to .env and fill in your provider key
 
@@ -136,7 +133,7 @@ async function promptApiKey(
   def: ProviderDefinition
 ): Promise<string | null> {
   console.log(`\n${def.label} API key`);
-  console.log("Leave empty to skip — uses mock provider until key is set.\n");
+  console.log("Leave empty to keep existing key or skip.\n");
 
   const key = await ask(rl, `${def.keyPrompt}: `);
   return key.length > 0 ? key : null;
@@ -258,37 +255,7 @@ export async function promptInitEnv(): Promise<InitEnvSelection> {
 }
 
 export function buildEnvContent(selection: InitEnvSelection): string {
-  const provider = selection.provider;
-  const def = provider ? getProviderDefinition(provider) : undefined;
-
-  const values = new Map<string, string>();
-
-  values.set("AI_REVIEW_PROVIDER", provider ?? "mock");
-
-  if (def && selection.model) {
-    values.set(primaryModelEnvVar(def.name), selection.model);
-  }
-
-  if (def) {
-    values.set(def.keyPrompt, selection.apiKey ?? "");
-  }
-
-  return ENV_EXAMPLE.split("\n")
-    .map((line) => {
-      const eq = line.indexOf("=");
-      if (eq <= 0 || line.startsWith("#")) {
-        return line;
-      }
-
-      const key = line.slice(0, eq).trim();
-      if (values.has(key)) {
-        return `${key}=${values.get(key)}`;
-      }
-
-      return line;
-    })
-    .join("\n")
-    .replace(/\n*$/, "\n");
+  return mergeEnvContent(null, selectionToEnvPatch(selection), ENV_EXAMPLE);
 }
 
 export interface EnvSetupResult {
@@ -307,19 +274,21 @@ export async function setupEnv(
   const exampleExists = await exists(examplePath);
   await writeFile(examplePath, ENV_EXAMPLE, "utf8");
 
-  let envStatus: WriteResult = "created";
+  let existingEnv: string | null = null;
+  let envExists = false;
 
   try {
-    await readFile(envPath, "utf8");
-    if (!force) {
-      return {
-        env: "skipped",
-        example: exampleExists ? "skipped" : "created",
-      };
-    }
-    envStatus = "overwritten";
+    existingEnv = await readFile(envPath, "utf8");
+    envExists = true;
   } catch {
-    envStatus = "created";
+    envExists = false;
+  }
+
+  if (envExists && !force) {
+    return {
+      env: "skipped",
+      example: exampleExists ? "skipped" : "created",
+    };
   }
 
   let selection: InitEnvSelection = { provider: null, model: null, apiKey: null };
@@ -332,10 +301,20 @@ export async function setupEnv(
     }
   }
 
-  await writeFile(envPath, buildEnvContent(selection), "utf8");
+  const patch = selectionToEnvPatch(selection);
+  const merged = mergeEnvContent(existingEnv, patch, ENV_EXAMPLE);
+
+  if (envExists && merged === existingEnv?.replace(/\n*$/, "\n")) {
+    return {
+      env: "skipped",
+      example: exampleExists ? "skipped" : "created",
+    };
+  }
+
+  await writeFile(envPath, merged, "utf8");
 
   return {
-    env: envStatus,
+    env: envExists ? "merged" : "created",
     example: exampleExists ? "overwritten" : "created",
   };
 }
