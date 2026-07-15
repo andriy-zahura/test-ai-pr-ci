@@ -4,6 +4,12 @@ All notable changes to `jti-ai-review` are documented here.
 
 Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Versions use [Semantic Versioning](https://semver.org/).
 
+## [0.1.4] - 2026-07-15
+
+### Changed
+
+- README and scaffolded consumer docs updated — removed internal/maintainer content (tarball install, `npm link`, source-repo paths); consumer-focused install, upgrade, and usage only.
+
 ## [0.1.3] - 2026-07-15
 
 ### Added
@@ -59,6 +65,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 - `npm pack` / local tarball install support.
 - `/jti-review` skill scaffold and `docs/ai-review/` consumer docs.
 
+[0.1.4]: https://github.com/andriy-zahura/test-ai-pr-ci/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/andriy-zahura/test-ai-pr-ci/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/andriy-zahura/test-ai-pr-ci/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/andriy-zahura/test-ai-pr-ci/compare/v0.1.0...v0.1.1

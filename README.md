@@ -2,7 +2,7 @@
 
 Local AI pre-commit review. Per-developer config in gitignored `.env.jti-ai-review`. Hook is **local only** — teammates are never forced to use it.
 
-## Install (npm)
+## Install
 
 ```bash
 npm install -D jti-ai-review
@@ -22,59 +22,20 @@ npm install   # husky
 
 3. **Provider / API key / model** — skippable; edit `.env.jti-ai-review` later.
 
-Creates locally (gitignored where noted): `.husky/pre-commit`, `.env.jti-ai-review`, git aliases.
+Init creates on your machine (gitignored): `.husky/pre-commit`, `.env.jti-ai-review`, git aliases.
 
-Commits to repo: `.env.jti-ai-review.example`, `.husky/pre-commit.example`, `docs/ai-review/`, `review-mapping.json`, etc.
+Init scaffolds into the repo (commit these): `.env.jti-ai-review.example`, `.husky/pre-commit.example`, `docs/ai-review/`, `review-mapping.json`, etc.
 
-## Install locally without npm registry (tarball)
-
-**You do not need to uninstall** the old package. Installing a `.tgz` replaces it in place.
-
-### 1. Build archive (package source repo)
+## Upgrade
 
 ```bash
-cd /path/to/test-ai-pr-ci
-npm run pack:local
-# → jti-ai-review-0.1.2.tgz (version in filename)
-```
-
-### 2. Install in your consumer project
-
-```bash
-cd /path/to/your-app
-npm install -D /path/to/test-ai-pr-ci/jti-ai-review-0.1.2.tgz
-```
-
-### 3. Upgrade from an older inited version
-
-```bash
+npm update jti-ai-review
 npx ai-review init --force
 ```
 
-Answer the wizard again. Your existing `.env.jti-ai-review` is **merged** (API keys preserved). Local hook + `git no-review` alias refreshed.
+Your existing `.env.jti-ai-review` is merged (API keys preserved). Local hook and `git no-review` alias are refreshed.
 
-**Optional cleanup** (old versions):
-
-```bash
-rm -f ai-review.config.json          # obsolete — settings now in .env.jti-ai-review
-git config --local --unset-all alias.wip   # old alias name (init --force removes it too)
-```
-
-**Commit after upgrade** (team-shared): `.env.jti-ai-review.example`, `.husky/pre-commit.example`, `docs/ai-review/`, `.gitignore` updates.
-
-**Do not commit**: `.env.jti-ai-review`, `.husky/pre-commit`.
-
-### Alternative: npm link (dev only)
-
-```bash
-# package repo
-cd /path/to/test-ai-pr-ci && npm run build:cli && npm link
-
-# consumer repo
-npm link jti-ai-review
-```
-
-Re-run `npm run build:cli` in source after every code change.
+If upgrading from an older setup, remove obsolete `ai-review.config.json` if present — settings now live in `.env.jti-ai-review`.
 
 ## Daily flow
 
@@ -128,14 +89,14 @@ CLI: `ai-review run --skip --no-report --report`
 |----------|-----|-------|
 | anthropic | `ANTHROPIC_API_KEY` | recommended |
 | openai | `OPENAI_API_KEY` | |
-| cursor | `CURSOR_API_KEY` | Cloud Agents; Max Mode billing; `CURSOR_MODEL=composer-2.5` = standard tier |
+| cursor | `CURSOR_API_KEY` | Cloud Agents; less reliable JSON output |
 | gemini | `GOOGLE_API_KEY` | |
 | mock | — | no key |
 
 ## Commands
 
 ```bash
-npx ai-review init [--force] [--skip-prompt]
+npx ai-review init [--force]
 npx ai-review run [--skip] [--no-report] [--report] [--provider <name>]
 ```
 

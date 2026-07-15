@@ -1,0 +1,3 @@
+#!/bin/sh
+npm run build:cli --if-present 2>/dev/null || true
+npm run ai-review
