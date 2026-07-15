@@ -12,9 +12,16 @@ import {
   AI_REVIEW_MARKER_END,
   AI_REVIEW_MARKER_START,
   GITIGNORE_LINES,
+  GITIGNORE_REQUIRED_LINES,
   SCAFFOLD_FILES,
 } from "./templates.js";
 import { setupEnv } from "./setupEnv.js";
+import { patchGitAliases, formatGitAliasHelp } from "./gitAliases.js";
+import { promptOptIn, promptAutoRun, printOptOutMessage } from "./promptOptIn.js";
+import {
+  disableLocalReview,
+  installLocalPreCommitHook,
+} from "./localHook.js";
 import {
   JTI_ENV_EXAMPLE_FILE,
   JTI_ENV_FILE,
@@ -55,7 +62,7 @@ async function writeScaffoldFile(
   return fileExists ? "overwritten" : "created";
 }
 
-async function patchGitignore(rootDir: string, force: boolean): Promise<WriteResult> {
+async function patchGitignore(rootDir: string, _force: boolean): Promise<WriteResult> {
   const gitignorePath = join(rootDir, ".gitignore");
   const block = GITIGNORE_LINES.join("\n");
 
@@ -65,7 +72,9 @@ async function patchGitignore(rootDir: string, force: boolean): Promise<WriteRes
   }
 
   const current = await readFile(gitignorePath, "utf8");
-  if (current.includes("docs/reviews/**")) {
+  const missing = GITIGNORE_REQUIRED_LINES.filter((line) => !current.includes(line));
+
+  if (missing.length === 0) {
     return "skipped";
   }
 
@@ -165,10 +174,13 @@ export interface InitResult {
   overwritten: string[];
   merged: string[];
   packageScripts: string[];
+  gitAliases: string[];
+  optedOut: boolean;
 }
 
 export interface InitOptions {
   skipPrompt?: boolean;
+  autoRun?: boolean;
 }
 
 export async function runInit(
@@ -176,12 +188,33 @@ export async function runInit(
   force: boolean,
   options: InitOptions = {}
 ): Promise<InitResult> {
-  const result: InitResult = {
+  const emptyResult = (): InitResult => ({
     created: [],
     skipped: [],
     overwritten: [],
     merged: [],
     packageScripts: [],
+    gitAliases: [],
+    optedOut: false,
+  });
+
+  let autoRun = options.autoRun ?? false;
+
+  if (!options.skipPrompt) {
+    const enabled = await promptOptIn();
+    if (!enabled) {
+      const hadInstall = await disableLocalReview(rootDir);
+      printOptOutMessage(hadInstall);
+      return { ...emptyResult(), optedOut: true };
+    }
+
+    autoRun = await promptAutoRun();
+  } else {
+    autoRun = options.autoRun ?? true;
+  }
+
+  const result: InitResult = {
+    ...emptyResult(),
   };
 
   for (const file of SCAFFOLD_FILES) {
@@ -205,7 +238,13 @@ export async function runInit(
   const gitignoreStatus = await patchGitignore(rootDir, force);
   result[gitignoreStatus].push(".gitignore");
 
-  const envSetup = await setupEnv(rootDir, force, Boolean(options.skipPrompt));
+  const hookStatus = await installLocalPreCommitHook(rootDir, force);
+  result[hookStatus].push(".husky/pre-commit (local)");
+
+  const envSetup = await setupEnv(rootDir, force, {
+    skipPrompt: Boolean(options.skipPrompt),
+    autoRun,
+  });
   if (envSetup.env === "merged") {
     result.merged.push(JTI_ENV_FILE);
   } else {
@@ -215,10 +254,21 @@ export async function runInit(
 
   result.packageScripts = await patchPackageJson(rootDir);
 
+  const aliasPatch = await patchGitAliases(rootDir, force);
+  result.gitAliases = aliasPatch.aliases;
+  if (aliasPatch.status !== "skipped") {
+    result[aliasPatch.status].push("git aliases (local)");
+  } else if (aliasPatch.aliases.length > 0) {
+    result.skipped.push("git aliases (local)");
+  }
+
   return result;
 }
 
 export function printInitResult(result: InitResult): void {
+  if (result.optedOut) {
+    return;
+  }
   if (result.created.length > 0) {
     console.log("Created:");
     for (const file of result.created) {
@@ -251,12 +301,20 @@ export function printInitResult(result: InitResult): void {
     console.log(`Added package.json scripts: ${result.packageScripts.join(", ")}`);
   }
 
+  if (result.gitAliases.length > 0) {
+    console.log("\nGit aliases (local .git/config):");
+    console.log(formatGitAliasHelp());
+    console.log("\nShorthand -c flags:");
+    console.log('  git -c ai-review.skip=true commit -m "..."');
+    console.log('  git -c ai-review.no-review=true commit -m "..."');
+  }
+
   console.log("\nNext steps:");
-  console.log(`  1. Check ${JTI_ENV_FILE} (gitignored — your keys stay local)`);
+  console.log(`  1. Edit ${JTI_ENV_FILE} — AI_REVIEW_ENABLED, AI_REVIEW_AUTO_RUN, keys`);
   console.log("  2. Re-run init to change provider/model: npm run ai-review:init -- --force");
   console.log("  3. Read docs/ai-review/README.md");
   console.log("  4. Copy skill globally (optional): cp -r .cursor/skills/jti-review ~/.cursor/skills/");
   console.log("  5. Before commit: invoke /jti-review in your agent");
   console.log("  6. Edit review-mapping.json for your features");
-  console.log("  7. git add . && git commit");
+  console.log("  7. git add . && git commit -m \"...\"   (or git no-review -m \"...\" to skip review)");
 }

@@ -12,22 +12,34 @@ import {
 } from "./context/docCoverage.js";
 import { loadMapping } from "./context/docMapper.js";
 import { loadEnv, resolveDefaultProvider } from "./config/loadEnv.js";
+import {
+  resolveReviewSettings,
+  type ReviewRunOptions,
+} from "./config/reviewSettings.js";
 import { normalizeProviderName } from "./config/providerConfig.js";
 import { runInit, printInitResult } from "./init/scaffold.js";
 import { runIsolatedReview } from "./review/spawnReview.js";
 import { saveReport } from "./report/saveReport.js";
 import { listProviders } from "./review/reviewer.js";
 import type { ReviewResult } from "./review/types.js";
+import {
+  canPromptPreReview,
+  promptPreReview,
+} from "./utils/preReviewPrompt.js";
+import { formatReviewFailureError } from "./utils/reviewFailureRecovery.js";
 
-function getRootDir(): string {
-  return process.cwd();
+function shouldSkipReview(settings: { skipReview: boolean }): boolean {
+  return settings.skipReview;
 }
 
-function printSummary(result: ReviewResult, reportPath: string): void {
+function printSummary(result: ReviewResult, reportPath?: string): void {
   console.log("\n--- AI Pre-Commit Review ---\n");
   console.log(`Overall score: ${result.overallScore}/10`);
   console.log(`Issues: ${result.issues.length}`);
-  console.log(`Report: ${reportPath}\n`);
+  if (reportPath) {
+    console.log(`Report: ${reportPath}`);
+  }
+  console.log("");
 
   for (const issue of result.issues) {
     const location = issue.file ? ` (${issue.file})` : "";
@@ -67,21 +79,22 @@ function createPromptInterface() {
   });
 }
 
-async function promptAction(reportPath: string): Promise<"commit" | "cancel"> {
+function getRootDir(): string {
+  return process.cwd();
+}
+
+async function promptAction(reportPath?: string): Promise<"commit" | "cancel"> {
   const rl = createPromptInterface();
+  const prompt = reportPath
+    ? "[P] Commit anyway  [R] Open review  [C] Cancel commit\n> "
+    : "[P] Commit anyway  [C] Cancel commit\n> ";
 
   try {
     while (true) {
-      const answer = (
-        await rl.question(
-          "[P] Commit anyway  [R] Open review  [C] Cancel commit\n> "
-        )
-      )
-        .trim()
-        .toLowerCase();
+      const answer = (await rl.question(prompt)).trim().toLowerCase();
 
       if (!answer) {
-        console.log("Choose P, R, or C.");
+        console.log(reportPath ? "Choose P, R, or C." : "Choose P or C.");
         continue;
       }
 
@@ -94,20 +107,33 @@ async function promptAction(reportPath: string): Promise<"commit" | "cancel"> {
       }
 
       if (answer === "r" || answer === "open") {
+        if (!reportPath) {
+          console.log("No report file (saveReport is off). Issues are in terminal above.");
+          continue;
+        }
         openFile(reportPath);
         console.log(`Opened ${reportPath}`);
         continue;
       }
 
-      console.log("Choose P, R, or C.");
+      console.log(reportPath ? "Choose P, R, or C." : "Choose P or C.");
     }
   } finally {
     rl.close();
   }
 }
 
-async function runReview(provider: string): Promise<void> {
+async function runReview(
+  provider: string,
+  options: ReviewRunOptions = {}
+): Promise<void> {
   const rootDir = getRootDir();
+  const settings = await resolveReviewSettings(rootDir, options);
+
+  if (!settings.enabled) {
+    console.log("AI review disabled (AI_REVIEW_ENABLED=false in .env.jti-ai-review).");
+    process.exit(0);
+  }
 
   console.log("Building review context (staged changes)...");
   const context = await buildContext(rootDir);
@@ -115,6 +141,19 @@ async function runReview(provider: string): Promise<void> {
   if (context.changedFiles.length === 0) {
     console.log("No staged changes to review.");
     process.exit(0);
+  }
+
+  if (shouldSkipReview(settings)) {
+    console.log("Review skipped.");
+    process.exit(0);
+  }
+
+  if (!settings.autoRun && canPromptPreReview()) {
+    const choice = await promptPreReview();
+    if (choice === "skip") {
+      console.log("Review skipped.");
+      process.exit(0);
+    }
   }
 
   const mapping = await loadMapping(rootDir);
@@ -133,7 +172,11 @@ async function runReview(provider: string): Promise<void> {
   );
 
   const result = await runIsolatedReview(provider, context);
-  const reportPath = await saveReport(rootDir, result, context);
+
+  let reportPath: string | undefined;
+  if (settings.saveReport) {
+    reportPath = await saveReport(rootDir, result, context);
+  }
 
   printSummary(result, reportPath);
 
@@ -170,7 +213,10 @@ program
   .command("run")
   .description("Review staged changes before commit")
   .option("--provider <name>", "review provider (default: .env.jti-ai-review or mock)")
-  .action(async (options: { provider?: string }) => {
+  .option("--skip", "skip AI review (no LLM call)")
+  .option("--no-report", "do not write docs/reviews/*.md")
+  .option("--report", "write report file (overrides saveReport: false)")
+  .action(async (options: { provider?: string; skip?: boolean; noReport?: boolean; report?: boolean }) => {
     try {
       await loadEnv(getRootDir());
       const provider = normalizeProviderName(
@@ -182,9 +228,14 @@ program
           `Unknown provider "${provider}". Available: ${listProviders().join(", ")}`
         );
       }
-      await runReview(provider);
+      await runReview(provider, {
+        skip: Boolean(options.skip),
+        noReport: Boolean(options.noReport),
+        report: Boolean(options.report),
+      });
     } catch (error) {
-      console.error(error instanceof Error ? error.message : error);
+      const detail = error instanceof Error ? error.message : String(error);
+      console.error(formatReviewFailureError(detail));
       process.exit(1);
     }
   });

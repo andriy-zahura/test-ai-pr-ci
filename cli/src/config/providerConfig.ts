@@ -25,17 +25,23 @@ export const PROVIDER_DEFINITIONS: ProviderDefinition[] = [
     label: "Cursor",
     envKeys: ["CURSOR_API_KEY"],
     modelEnvVars: ["CURSOR_MODEL", "AI_REVIEW_MODEL"],
-    defaultModel: "auto",
+    defaultModel: "composer-2.5",
     models: [
-      { id: "auto", label: "Auto (account default)" },
-      { id: "composer-2.5", label: "Composer 2.5" },
+      { id: "auto", label: "Auto (account default — may bill as Max)" },
+      {
+        id: "composer-2.5",
+        label: "Composer 2.5 standard (cheaper — recommended)",
+      },
+      { id: "composer-2.5-fast", label: "Composer 2.5 Fast (higher $/token)" },
       { id: "claude-fable-5", label: "Claude Fable 5" },
       { id: "claude-opus-4-8", label: "Claude Opus 4.8" },
       { id: "claude-sonnet-5", label: "Claude Sonnet 5" },
     ],
     keyPrompt: "CURSOR_API_KEY",
     modelIdHint:
-      "Copy from Cursor Settings → Models, or run: curl -u $CURSOR_API_KEY: https://api.cursor.com/v1/models",
+      "Cloud Agents API always runs Max Mode (cannot disable). " +
+      "composer-2.5 uses standard tier by default here; set CURSOR_MODEL_FAST=true for Fast. " +
+      "For cheapest reviews, use AI_REVIEW_PROVIDER=anthropic or openai.",
   },
   {
     name: "openai",
@@ -139,6 +145,8 @@ export function normalizeModelId(input: string, provider: string): string {
     "fable-5": "claude-fable-5",
     "composer 2.5": "composer-2.5",
     "composer2.5": "composer-2.5",
+    "composer 2.5 fast": "composer-2.5-fast",
+    "composer-2.5 fast": "composer-2.5-fast",
   };
 
   if (displayNameAliases[lower]) {

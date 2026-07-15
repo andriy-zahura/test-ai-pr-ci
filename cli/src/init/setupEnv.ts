@@ -27,14 +27,25 @@ type WriteResult = "created" | "skipped" | "overwritten" | "merged";
 
 export type { InitEnvSelection } from "./envMerge.js";
 
-export const ENV_EXAMPLE = `# jti-ai-review — copy to ${JTI_ENV_FILE} and fill in your provider key
+export const ENV_EXAMPLE = `# jti-ai-review — per-developer config (gitignored). Copy from ${JTI_ENV_EXAMPLE_FILE}.
+
+# --- Review on/off (this machine only) ---
+# false = pre-commit hook exits immediately (git commit and git no-review both unchanged)
+AI_REVIEW_ENABLED=true
+# false = ask each commit: [S] skip / [Enter] run. true = auto-review every commit.
+AI_REVIEW_AUTO_RUN=false
+# true = write docs/reviews/YYYY-MM-DD/HH-mm.md (default: false)
+AI_REVIEW_SAVE_REPORT=false
 
 # Provider: cursor | openai | codex | anthropic | claude | gemini | google | mock
 AI_REVIEW_PROVIDER=cursor
 
 # --- Cursor (Dashboard → Integrations → API Keys) ---
+# Cloud Agents API always bills as Max Mode. composer-2.5 defaults to standard (cheaper).
+# Set CURSOR_MODEL_FAST=true to use Composer 2.5 Fast instead.
 CURSOR_API_KEY=
-CURSOR_MODEL=auto
+CURSOR_MODEL=composer-2.5
+# CURSOR_MODEL_FAST=false
 
 # --- OpenAI / Codex ---
 # OPENAI_API_KEY=
@@ -267,10 +278,15 @@ export interface EnvSetupResult {
   example: WriteResult;
 }
 
+export interface EnvSetupOptions {
+  skipPrompt?: boolean;
+  autoRun?: boolean;
+}
+
 export async function setupEnv(
   rootDir: string,
   force: boolean,
-  skipPrompt: boolean
+  options: EnvSetupOptions = {}
 ): Promise<EnvSetupResult> {
   const examplePath = join(rootDir, JTI_ENV_EXAMPLE_FILE);
   const envPath = join(rootDir, JTI_ENV_FILE);
@@ -305,7 +321,7 @@ export async function setupEnv(
 
   let selection: InitEnvSelection = { provider: null, model: null, apiKey: null };
 
-  if (!skipPrompt) {
+  if (!options.skipPrompt) {
     try {
       selection = await promptInitEnv();
     } catch {
@@ -313,7 +329,14 @@ export async function setupEnv(
     }
   }
 
-  const patch = selectionToEnvPatch(selection);
+  const autoRun = options.autoRun ?? false;
+
+  const patch = {
+    ...selectionToEnvPatch(selection),
+    AI_REVIEW_ENABLED: "true",
+    AI_REVIEW_AUTO_RUN: autoRun ? "true" : "false",
+    AI_REVIEW_SAVE_REPORT: "false",
+  };
   const merged = mergeEnvContent(existingEnv, patch, ENV_EXAMPLE);
 
   if (envExists && merged === existingEnv?.replace(/\n*$/, "\n")) {

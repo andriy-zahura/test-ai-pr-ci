@@ -7,6 +7,11 @@ export interface ScaffoldFile {
   executable?: boolean;
 }
 
+export const PRE_COMMIT_HOOK_CONTENT = `#!/bin/sh
+npm run build:cli --if-present 2>/dev/null || true
+npm run ai-review
+`;
+
 export const SCAFFOLD_FILES: ScaffoldFile[] = [
   {
     path: "docs/ai-review/README.md",
@@ -16,11 +21,14 @@ Local review runs on **staged changes** before each \`git commit\`.
 
 ## Quick start
 
-1. Set API key: \`npm run ai-review:init\` (prompts) or copy \`${JTI_ENV_EXAMPLE_FILE}\` → \`${JTI_ENV_FILE}\`
-2. Stage changes: \`git add <files>\`
-3. Commit: \`git commit -m "message"\`
-4. Review runs automatically (Husky pre-commit hook)
-5. Choose: **[P] Commit anyway** | **[R] Open report** | **[C] Cancel**
+1. \`npm install -D jti-ai-review && npx ai-review init\`
+   - **Y/N** — enable review on this machine?
+   - If **Y** — auto every commit, or **[S]/[Enter]** prompt each time?
+   - Provider/key/model (skippable)
+2. Edit \`${JTI_ENV_FILE}\` — \`AI_REVIEW_ENABLED\`, \`AI_REVIEW_AUTO_RUN\`, \`AI_REVIEW_SAVE_REPORT\`, API keys
+3. Stage: \`git add <files>\`
+4. Commit: \`git commit -m "..."\` or \`git no-review -m "..."\` to skip review
+5. Choose: **[S] Skip** (before LLM) | **[P] Commit anyway** | **[C] Cancel**
 
 Provider: \`cursor\` | \`openai\` | \`codex\` | \`anthropic\`/\`claude\` | \`gemini\`/\`google\` | \`mock\`
 
@@ -28,11 +36,13 @@ Provider: \`cursor\` | \`openai\` | \`codex\` | \`anthropic\`/\`claude\` | \`gem
 
 | Provider | Env key | Default model |
 |----------|---------|---------------|
-| cursor | \`CURSOR_API_KEY\` | auto |
+| cursor | \`CURSOR_API_KEY\` | composer-2.5 (standard) |
 | openai | \`OPENAI_API_KEY\` | gpt-4o-mini |
 | codex | \`OPENAI_API_KEY\` | gpt-4.1 |
 | claude | \`ANTHROPIC_API_KEY\` | claude-sonnet-4-20250514 |
 | gemini | \`GOOGLE_API_KEY\` | gemini-2.0-flash |
+
+**Cursor billing:** uses Cloud Agents API → always **Max Mode** (cannot disable). \`composer-2.5\` here defaults to **standard** (cheaper). Use \`composer-2.5-fast\` or \`CURSOR_MODEL_FAST=true\` for Fast. Prefer **anthropic**/**openai** for cheaper reviews.
 
 Cursor key: Dashboard → Integrations → API Keys (\`cursor_...\`).
 
@@ -57,27 +67,34 @@ The reviewer does **not** see your full repo or IDE chat history.
 .env.jti-ai-review.example  # committed template (safe to commit)
 .env.jti-ai-review          # your API keys (gitignored)
 review-mapping.json         # which files → which docs
+${JTI_ENV_FILE}             # per-dev: enabled, keys (gitignored)
 docs/
   ai-review/                # this guide + agent instructions
   project-rules/            # coding standards, review criteria
   <feature>/                # feature specs (e.g. auth/, payments/)
   reviews/                  # local reports, gitignored, grouped by day
-.husky/pre-commit           # runs ai-review
+.husky/pre-commit.example   # committed template
+.husky/pre-commit           # local only (gitignored) — created on init Y
 \`\`\`
 
 ## Configuration
 
-jti-ai-review keeps its config in a **dedicated env file** — like Sentry's separate config. \`ai-review init\` never modifies your project's \`.env\` or \`.env.example\`.
+Per-developer settings live in \`${JTI_ENV_FILE}\` (gitignored). Init never touches project \`.env\`.
 
-| File | Committed? | Purpose |
-|------|------------|---------|
-| \`.env.jti-ai-review.example\` | Yes | Template |
-| \`.env.jti-ai-review\` | No | API keys + provider |
-| \`.env.jti-ai-review.local\` | No | Optional overrides |
+\`\`\`env
+AI_REVIEW_ENABLED=true       # false = hook no-op on this machine
+AI_REVIEW_AUTO_RUN=false     # false = [S]/[Enter] prompt; true = auto-review every commit
+AI_REVIEW_SAVE_REPORT=false  # true = write docs/reviews/*.md
+AI_REVIEW_PROVIDER=anthropic
+\`\`\`
 
-Re-run \`npm run ai-review:init -- --force\` to change provider/model. Existing keys in \`.env.jti-ai-review\` are preserved unless you enter new values.
+| Var | Default | Meaning |
+|-----|---------|---------|
+| \`AI_REVIEW_ENABLED\` | \`true\` | \`false\` = hook exits; \`git commit\` and \`git no-review\` both normal |
+| \`AI_REVIEW_AUTO_RUN\` | \`false\` | \`true\` = review runs immediately; \`false\` = ask: **[S] skip** / **[Enter] run** |
+| \`AI_REVIEW_SAVE_REPORT\` | \`false\` | \`true\` = save report markdown files |
 
-Load order at review time (later wins): \`.env\` → \`.env.local\` → \`.env.jti-ai-review\` → \`.env.jti-ai-review.local\`.
+Terminal issues always print when review runs. Report files optional.
 
 ## For AI coding agents
 
@@ -95,9 +112,79 @@ Read before changing mapped code or docs:
 
 Severity guides priority in the report. **Commits are never auto-blocked** — the developer always chooses.
 
-## Bypass
+## Bypass / toggles
 
-\`git commit --no-verify\` skips the hook.
+One-off:
+
+\`\`\`bash
+git no-review -m "fix: wip"                       # alias: skip review
+git commit-report -m "feat: x"                   # alias: save report
+git -c ai-review.skip=true commit -m "..."       # shorthand -c
+\`\`\`
+
+Init registers \`git no-review\` and \`git commit-report\` in local \`.git/config\`.
+
+Set \`AI_REVIEW_ENABLED=false\` in \`${JTI_ENV_FILE}\` to disable the hook on your machine.
+
+Pre-review: **S** skips LLM (only when \`AI_REVIEW_AUTO_RUN=false\`). \`git commit --no-verify\` skips hook entirely.
+
+## When review fails (provider / JSON errors)
+
+If the hook prints something like \`Failed to parse review output: Unexpected token 'C'...\`, the LLM returned non-JSON (common with Cursor or network glitches). Your commit is **not** blocked automatically — the hook exits with an error, but you can proceed:
+
+\`\`\`bash
+git no-review -m "your message"    # one commit, skip review
+\`\`\`
+
+Or disable review on this machine in \`${JTI_ENV_FILE}\`:
+
+\`\`\`env
+AI_REVIEW_ENABLED=false
+\`\`\`
+
+Then \`git commit\` runs normally without calling the reviewer.
+
+## Upgrade from an older version
+
+**No uninstall needed** — install the new tarball over the old package, then re-init:
+
+\`\`\`bash
+# in consumer repo
+npm install -D /path/to/jti-ai-review-0.1.x.tgz
+npx ai-review init --force
+\`\`\`
+
+Init re-runs Y/N + auto-run prompts, merges \`${JTI_ENV_FILE}\` (keeps your keys), refreshes local hook + git aliases.
+
+**Cleanup from older setups (if present):**
+
+| Remove / ignore | Why |
+|-----------------|-----|
+| \`ai-review.config.json\` | Replaced by \`${JTI_ENV_FILE}\` |
+| \`git wip\` alias | Renamed to \`git no-review\` |
+| Committed \`.husky/pre-commit\` | Now gitignored; use \`.husky/pre-commit.example\` + local hook |
+
+**Commit to repo after upgrade:** \`.env.jti-ai-review.example\`, \`.husky/pre-commit.example\`, updated \`docs/ai-review/\`, \`.gitignore\` patch.
+
+**Keep local (gitignored):** \`${JTI_ENV_FILE}\`, \`.husky/pre-commit\`.
+
+## Local install without npm registry
+
+From the package source repo:
+
+\`\`\`bash
+cd /path/to/test-ai-pr-ci
+npm run pack:local          # builds + creates jti-ai-review-x.y.z.tgz
+\`\`\`
+
+In your consumer project:
+
+\`\`\`bash
+npm install -D /path/to/test-ai-pr-ci/jti-ai-review-x.y.z.tgz
+npx ai-review init --force  # upgrade existing install
+\`\`\`
+
+Alternative for active development: \`npm link\` in package repo, \`npm link jti-ai-review\` in consumer (requires \`npm run build:cli\` in source after changes).
 `,
   },
   {
@@ -416,20 +503,30 @@ Do **not** use Cursor's built-in \`/code-review\` command for this workflow.
     content: "",
   },
   {
-    path: ".husky/pre-commit",
-    content: `#!/bin/sh
-npm run build:cli --if-present 2>/dev/null || true
-npm run ai-review
-`,
+    path: ".husky/pre-commit.example",
+    content: PRE_COMMIT_HOOK_CONTENT,
     executable: true,
   },
 ];
 
-export const GITIGNORE_LINES = [
-  "",
-  "# jti-ai-review env (API keys)",
+export const GITIGNORE_MARKER = "# jti-ai-review (managed by ai-review init)";
+
+/** Lines that must appear in consumer .gitignore — checked individually on init. */
+export const GITIGNORE_REQUIRED_LINES = [
   ".env.jti-ai-review",
   ".env.jti-ai-review.local",
+  ".husky/pre-commit",
+  "docs/reviews/**",
+  "!docs/reviews/.gitkeep",
+] as const;
+
+export const GITIGNORE_LINES = [
+  "",
+  GITIGNORE_MARKER,
+  "# jti-ai-review env (API keys — .example is committed, real file is not)",
+  ".env.jti-ai-review",
+  ".env.jti-ai-review.local",
+  ".husky/pre-commit",
   "",
   "# Local review reports (not committed)",
   "docs/reviews/**",

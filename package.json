@@ -1,6 +1,6 @@
 {
   "name": "jti-ai-review",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Local AI pre-commit review pipeline with doc-sync skill",
   "license": "MIT",
   "repository": {
@@ -26,6 +26,7 @@
   "files": [
     "dist-cli",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "scripts": {

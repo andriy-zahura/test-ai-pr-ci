@@ -1,5 +1,10 @@
 import { parseReviewResult } from "../../parseResult.js";
 import { resolveApiKey, resolveModel } from "../../../config/providerConfig.js";
+import {
+  formatCursorModelForLog,
+  resolveCursorModelRequest,
+  type CursorModelRequest,
+} from "../../../config/cursorModel.js";
 import { readErrorBody, requireEnvValue } from "./http.js";
 
 const CURSOR_API_BASE = "https://api.cursor.com/v1";
@@ -225,7 +230,7 @@ async function waitForCursorRunText(
 async function createCursorRun(
   apiKey: string,
   prompt: string,
-  model: string,
+  model: CursorModelRequest | null,
   agentId?: string
 ): Promise<{ agentId: string; runId: string; text: string }> {
   const body: Record<string, unknown> = {
@@ -233,8 +238,10 @@ async function createCursorRun(
     mode: "plan",
   };
 
-  if (model !== "auto") {
-    body.model = { id: model };
+  if (model) {
+    body.model = model.params?.length
+      ? { id: model.id, params: model.params }
+      : { id: model.id };
   }
 
   const path = agentId ? `/agents/${agentId}/runs` : "/agents";
@@ -275,7 +282,8 @@ export async function callCursorChat(system: string, user: string): Promise<stri
     "CURSOR_API_KEY",
     "cursor"
   );
-  const model = resolveModel("cursor");
+  const model = resolveCursorModelRequest(resolveModel("cursor"));
+  console.error(`Cursor model: ${formatCursorModelForLog(model)} (Cloud Agents always use Max Mode)`);
   const prompt = buildCursorReviewPrompt(system, user);
 
   const first = await createCursorRun(apiKey, prompt, model);
