@@ -6,6 +6,11 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Version
 
 ## [0.1.4] - 2026-07-15
 
+### Fixed
+
+- **`git no-review`** alias — was `commit -c …`, which made `git no-review -m "..."` fail (`options '-m' and '-c' cannot be used together`). Aliases now use shell form with `AI_REVIEW_SKIP=1` / `AI_REVIEW_SAVE_REPORT=1`.
+- **`AGENTS.md` duplication** on repeated `init` / `init --force` — only the `<!-- ai-review -->` block is injected or replaced; no extra `# AI Agents` headings stacked.
+
 ### Changed
 
 - README and scaffolded consumer docs updated — removed internal/maintainer content (tarball install, `npm link`, source-repo paths); consumer-focused install, upgrade, and usage only.
