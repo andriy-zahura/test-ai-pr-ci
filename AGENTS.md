@@ -1,17 +1,5 @@
 # AI Agents
 
-# AI Agents
-
-# AI Agents
-
-# AI Agents
-
-# AI Agents
-
-# AI Agents
-
-# AI Agents
-
 <!-- ai-review -->
 
 ## Pre-commit review pipeline

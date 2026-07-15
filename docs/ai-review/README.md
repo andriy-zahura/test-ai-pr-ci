@@ -129,17 +129,14 @@ Then `git commit` runs normally without calling the reviewer.
 
 ## Upgrade from an older version
 
-**No uninstall needed** — install the new tarball over the old package, then re-init:
-
 ```bash
-# in consumer repo
-npm install -D /path/to/jti-ai-review-0.1.x.tgz
+npm update jti-ai-review
 npx ai-review init --force
 ```
 
 Init re-runs Y/N + auto-run prompts, merges `.env.jti-ai-review` (keeps your keys), refreshes local hook + git aliases.
 
-**Cleanup from older setups (if present):**
+**Cleanup from older setuPps (if present):**
 
 | Remove / ignore | Why |
 |-----------------|-----|
@@ -150,21 +147,3 @@ Init re-runs Y/N + auto-run prompts, merges `.env.jti-ai-review` (keeps your key
 **Commit to repo after upgrade:** `.env.jti-ai-review.example`, `.husky/pre-commit.example`, updated `docs/ai-review/`, `.gitignore` patch.
 
 **Keep local (gitignored):** `.env.jti-ai-review`, `.husky/pre-commit`.
-
-## Local install without npm registry
-
-From the package source repo:
-
-```bash
-cd /path/to/test-ai-pr-ci
-npm run pack:local          # builds + creates jti-ai-review-x.y.z.tgz
-```
-
-In your consumer project:
-
-```bash
-npm install -D /path/to/test-ai-pr-ci/jti-ai-review-x.y.z.tgz
-npx ai-review init --force  # upgrade existing install
-```
-
-Alternative for active development: `npm link` in package repo, `npm link jti-ai-review` in consumer (requires `npm run build:cli` in source after changes).

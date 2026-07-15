@@ -10,12 +10,12 @@ export interface GitAliasDefinition {
 export const GIT_ALIASES: GitAliasDefinition[] = [
   {
     name: "no-review",
-    command: "commit -c ai-review.skip=true",
+    command: "!AI_REVIEW_SKIP=1 git commit",
     description: "commit, skip AI review",
   },
   {
     name: "commit-report",
-    command: "commit -c ai-review.saveReport=true",
+    command: "!AI_REVIEW_SAVE_REPORT=1 git commit",
     description: "commit + save report file",
   },
 ];

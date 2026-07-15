@@ -12,6 +12,31 @@ npm run build:cli --if-present 2>/dev/null || true
 npm run ai-review
 `;
 
+export const AI_REVIEW_MARKER_START = "<!-- ai-review -->";
+export const AI_REVIEW_MARKER_END = "<!-- /ai-review -->";
+
+/** Injected block only — no top-level heading (avoids duplicate "# AI Agents" on re-init). */
+export const AGENTS_MD_REVIEW_SECTION = `${AI_REVIEW_MARKER_START}
+
+## Pre-commit review pipeline
+
+This repo uses a local AI pre-commit review. **Read before changing code or docs:**
+
+1. [docs/ai-review/README.md](docs/ai-review/README.md)
+2. [docs/ai-review/AGENT-INSTRUCTIONS.md](docs/ai-review/AGENT-INSTRUCTIONS.md)
+3. [docs/ai-review/MAPPING.md](docs/ai-review/MAPPING.md)
+
+When adding features: update \`review-mapping.json\` + create \`docs/<feature>/README.md\` (see [FEATURE-DOC-TEMPLATE.md](docs/ai-review/FEATURE-DOC-TEMPLATE.md)).
+
+**Before commit:** invoke \`/jti-review\` (syncs docs/mapping — does **not** run the review). Copy \`.cursor/skills/jti-review\` to \`~/.cursor/skills/\` for global use.
+
+${AI_REVIEW_MARKER_END}
+`;
+
+export const AGENTS_MD_CONTENT = `# AI Agents
+
+${AGENTS_MD_REVIEW_SECTION}`;
+
 export const SCAFFOLD_FILES: ScaffoldFile[] = [
   {
     path: "docs/ai-review/README.md",
@@ -153,7 +178,7 @@ npx ai-review init --force
 
 Init re-runs Y/N + auto-run prompts, merges \`${JTI_ENV_FILE}\` (keeps your keys), refreshes local hook + git aliases.
 
-**Cleanup from older setups (if present):**
+**Cleanup from older setuPps (if present):**
 
 | Remove / ignore | Why |
 |-----------------|-----|
@@ -367,24 +392,7 @@ What the AI reviewer should check for this feature:
   },
   {
     path: "AGENTS.md",
-    content: `# AI Agents
-
-<!-- ai-review -->
-
-## Pre-commit review pipeline
-
-This repo uses a local AI pre-commit review. **Read before changing code or docs:**
-
-1. [docs/ai-review/README.md](docs/ai-review/README.md)
-2. [docs/ai-review/AGENT-INSTRUCTIONS.md](docs/ai-review/AGENT-INSTRUCTIONS.md)
-3. [docs/ai-review/MAPPING.md](docs/ai-review/MAPPING.md)
-
-When adding features: update \`review-mapping.json\` + create \`docs/<feature>/README.md\` (see [FEATURE-DOC-TEMPLATE.md](docs/ai-review/FEATURE-DOC-TEMPLATE.md)).
-
-**Before commit:** invoke \`/jti-review\` (syncs docs/mapping — does **not** run the review). Copy \`.cursor/skills/jti-review\` to \`~/.cursor/skills/\` for global use.
-
-<!-- /ai-review -->
-`,
+    content: AGENTS_MD_CONTENT,
   },
   {
     path: "review-mapping.json",
@@ -511,6 +519,3 @@ export const GITIGNORE_LINES = [
   "docs/reviews/**",
   "!docs/reviews/.gitkeep",
 ];
-
-export const AI_REVIEW_MARKER_START = "<!-- ai-review -->";
-export const AI_REVIEW_MARKER_END = "<!-- /ai-review -->";

@@ -11,6 +11,8 @@ import { dirname, join } from "node:path";
 import {
   AI_REVIEW_MARKER_END,
   AI_REVIEW_MARKER_START,
+  AGENTS_MD_CONTENT,
+  AGENTS_MD_REVIEW_SECTION,
   GITIGNORE_LINES,
   GITIGNORE_REQUIRED_LINES,
   SCAFFOLD_FILES,
@@ -85,34 +87,30 @@ async function patchGitignore(rootDir: string, _force: boolean): Promise<WriteRe
 
 async function patchAgentsMd(rootDir: string, force: boolean): Promise<WriteResult> {
   const agentsPath = join(rootDir, "AGENTS.md");
-  const template = SCAFFOLD_FILES.find((file) => file.path === "AGENTS.md");
-
-  if (!template) {
-    return "skipped";
-  }
+  const markerPattern = new RegExp(
+    `${AI_REVIEW_MARKER_START}[\\s\\S]*?${AI_REVIEW_MARKER_END}`,
+    "m"
+  );
 
   if (!(await exists(agentsPath))) {
-    await writeFile(agentsPath, template.content, "utf8");
+    await writeFile(agentsPath, AGENTS_MD_CONTENT, "utf8");
     return "created";
   }
 
   const current = await readFile(agentsPath, "utf8");
-  if (current.includes(AI_REVIEW_MARKER_START)) {
+
+  if (markerPattern.test(current)) {
     if (!force) {
       return "skipped";
     }
-    const stripped = current.replace(
-      new RegExp(
-        `${AI_REVIEW_MARKER_START}[\\s\\S]*?${AI_REVIEW_MARKER_END}\\n?`,
-        "m"
-      ),
-      ""
-    );
-    await writeFile(agentsPath, `${stripped.trimEnd()}\n\n${template.content}`, "utf8");
+
+    const updated = current.replace(markerPattern, AGENTS_MD_REVIEW_SECTION.trimEnd());
+    await writeFile(agentsPath, updated, "utf8");
     return "overwritten";
   }
 
-  await appendFile(agentsPath, `\n${template.content}`, "utf8");
+  const separator = current.trimEnd().length > 0 ? "\n\n" : "";
+  await appendFile(agentsPath, `${separator}${AGENTS_MD_REVIEW_SECTION}`, "utf8");
   return "created";
 }
 
